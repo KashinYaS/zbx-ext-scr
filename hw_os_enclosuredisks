@@ -1,7 +1,6 @@
 #!/bin/bash
 
 #Get disks from device with ip $2 and community $3
-#and than replace disk enclosure OID with disk health OID 
 DiskList=`snmpbulkwalk -v2c -c $3 -Onq -r 0 -t 1 $2 1.3.6.1.4.1.34774.4.1.23.5.1.1.4 | grep -i "$4" | cut -d" " -f1 | sed 's/1\.3\.6\.1\.4\.1\.34774\.4\.1\.23\.5\.1\.1\.4/1.3.6.1.4.1.34774.4.1.23.5.1.1.2/g' 2>/dev/null`
 
 if [ $? -eq 0 ]
@@ -13,8 +12,21 @@ then
     echo "-1"
     exit 0
   else
-    NonHealthyDiskCount=`snmpbulkwalk -v2c -c $3 -Onq -r 0 -t 1 $2 1.3.6.1.4.1.34774.4.1.23.5.1.1.2 | grep -i "$DiskList" | cut -d" " -f2 | grep -v "^1$" | grep -c . 2>/dev/null`
-    echo -e "$NonHealthyDiskCount" 2>/dev/null
+    DiskCount=`echo -e "$DiskList" | grep -c . 2>/dev/null`
+    IFS='
+'
+    HealthyDiskCount=0
+    for OID in $DiskList
+    do
+      #Result=""
+      Result=`snmpget -v2c -c $3 -Onqv -r 0 -t 1 $2 "$OID" 2>/dev/null`
+      if [[ "$Result" == "1" ]]
+      then
+        HealthyDiskCount=$((HealthyDiskCount+1))
+      fi
+    done
+    BadDiskCount=$(($DiskCount - $HealthyDiskCount))
+    echo "$BadDiskCount"
     exit 0
   fi
 else
