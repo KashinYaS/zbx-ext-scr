@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Get disk state from device with ip $2 community $3 and OID's tail $4
+# The OceanStor's behaviour is to return "Failed object..." error with snmpget command
+# (but snmpwalk/snmpbulkwalk works as expected)
+# So if snmpget fails - the disk is unavailable (to prevent community and host IP problems
+# use macro and trigger dependency in Zabbix
+
+DiskState=`snmpget -v2c -c $3 -Oqv -r 0 -t 1 $2 ".1.3.6.1.4.1.34774.4.1.23.5.1.1.2.$4" 2>/dev/null`
+
+if [ $? -eq 0 ]
+then
+  #Succefully received disk state or "No OID available" message
+  if [[ $Alarms == No* ]]
+  then
+    # No such OID ava
+    echo "-100501"
+    exit 1
+  else
+    echo "$DiskState"
+    exit 0
+  fi
+else
+  # Usually Wrong community specified or smth. Cannot retrive OID value. Quitting with error.
+  # Here it marks unavailable disk as failed(2)
+  echo "2"
+  exit 0
+fi
