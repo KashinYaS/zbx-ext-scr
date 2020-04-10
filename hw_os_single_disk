@@ -6,15 +6,15 @@
 # So if snmpget fails - the disk is unavailable (to prevent community and host IP problems
 # use macro and trigger dependency in Zabbix
 
-DiskState=`snmpget -v2c -c $3 -Oqv -r 0 -t 1 $2 ".1.3.6.1.4.1.34774.4.1.23.5.1.1.2.$4" 2>/dev/null`
+DiskState=`snmpget -v2c -c $3 -Oqv -r 0 -t 2 $2 ".1.3.6.1.4.1.34774.4.1.23.5.1.1.2.$4" 2>&1`
 
 if [ $? -eq 0 ]
 then
   #Succefully received disk state or "No OID available" message
-  if [[ $Alarms == No* ]]
+  if [[ $DiskState == No* ]]
   then
-    # No such OID ava
-    echo "-100501"
+    # No such OID available - quitting with error code to mark item as unavailable
+    echo "1"
     exit 1
   else
     echo "$DiskState"
@@ -22,7 +22,15 @@ then
   fi
 else
   # Usually Wrong community specified or smth. Cannot retrive OID value. Quitting with error.
-  # Here it marks unavailable disk as failed(2)
-  echo "2"
-  exit 0
+  FailedCount=`echo "$DiskState" | grep -io "Failed object" | wc -l`
+  if [ $FailedCount -gt 0 ]
+  then
+    # Disk is bad or no such OID
+    echo "2"
+    exit 0
+  else
+    # Community is wrong, connection timeout or something else
+    echo "1"
+    exit 2
+  fi
 fi
