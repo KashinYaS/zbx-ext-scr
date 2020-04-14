@@ -1,0 +1,1 @@
+cisco_bgp_nei - get BGP neighbor IP and OID's suffix. Use this as LLD key "cisco_bgp_nei["{HOST.CONN}","{IPADDRESS}","{$SNMP_COMMUNITY}"]" {#VALUE} is a IPv4 BGP neighbor's IP, and {#INDEX} is a suffix suitable for OID and Key fields
