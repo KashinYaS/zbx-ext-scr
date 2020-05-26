@@ -1,4 +1,3 @@
-  
 #!/bin/bash
 
 # Get number of IP's used in ASA (from local IP pool) matching regex $4 from device with ip $2 community $3
