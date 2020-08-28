@@ -1,0 +1,48 @@
+#!/bin/bash
+
+SWITCHPORTPHY=`snmpwalk -r 0 -t 0.5 -v2c -c $2 -Oqn $1 .1.3.6.1.2.1.2.2.1.2 | grep "^.*\s[Ff][Cc]\s[Pp][Oo][Rr][Tt].*$"  2>/dev/null`
+
+if [ $? -eq 0 ]
+then
+  #Succefully received time value or "No OID available" message
+  if [[ $SWITCHPORTPHY == No* ]]
+  then
+    # No such OID available. Device does not support NTP MIB. Quitting with no error.
+    echo "-100501"
+    exit 0
+  else
+    RAWFCPORTDESCR=`snmpwalk -r 0 -t 0.5 -v2c -c $2 -Oqn $1 .1.3.6.1.3.94.1.10.1.17  2>/dev/null`
+
+    if [ $? -eq 0 ]
+    then
+      #Succefully received time value or "No OID available" message
+      if [[ $RAWFCPORTDESCR == No* ]]
+      then
+        # No such OID available. Device does not support NTP MIB. Quitting with no error.
+        echo "-100502"
+        exit 0
+      else
+        FCPORTDESCR=()
+        while IFS= read -r line; do
+          FCPORTDESCR+=( "$line" )
+        done < <( echo -e "$RAWFCPORTDESCR" )
+        IFS=$'
+'
+        ArrayIndex=0
+        for SWPORT in $SWITCHPORTPHY; do
+          SNMPIndex=`echo $SWPORT | cut -d' ' -f 1 | cut -d'.' -f "12"`
+          SNMPPhy=`echo $SWPORT | cut -d' ' -f "2-"`
+          FCIndex=`echo ${FCPORTDESCR[$ArrayIndex]} | cut -d' ' -f 1 | cut -d'.' -f "12-"`
+          FCDescr=`echo ${FCPORTDESCR[$ArrayIndex]} | cut -d' ' -f "2-" | tr -d '"'`
+          let "ArrayIndex+=1"
+          jq -n --arg SNMPIndex "$SNMPIndex" --arg SNMPPhy "$SNMPPhy" --arg FCIndex "$FCIndex" --arg FCDescr "$FCDescr"   '{"{#SNMPINDEX}": $SNMPIndex, "{#SNMPVALUEPHY}": $SNMPPhy, "{#SNMPINDEX2}": $FCIndex, "{#SNMPVALUEDESCR}": $FCDescr }'
+        done  | jq -n '.data |= [inputs]'
+        exit 0
+      fi
+    fi
+  fi
+else
+  # Wrong community specified or smth. Cannot retrive OID value. Quitting with error.
+  echo "-100500"
+  exit 0
+fi
