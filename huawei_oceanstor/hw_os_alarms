@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Get alarms from device with ip $2 and community $3
-Alarms=`snmpwalk -v2c -c $3 -Oqv -r 0 -t 1 $2 .1.3.6.1.4.1.2011.2.91.10.1.1.1.4 | grep -v "Storage Pool Remaining Capacity Is Insufficient" 2>/dev/null`
+Alarms=`snmpwalk -v2c -c $3 -Oqv -r 0 -t 1 $2 .1.3.6.1.4.1.2011.2.91.10.1.1.1.4 2>/dev/null`
 
 if [ $? -eq 0 ]
 then
@@ -12,7 +12,9 @@ then
     echo "0"
     exit 0
   else
-    echo -e "$Alarms" | grep -c . 2>/dev/null
+    #filtering storage pool exhaust
+    AlarmsFiltered=`echo -e $Alarms | grep -v "Storage Pool Remaining Capacity Is Insufficient" 2>/dev/null`
+    echo -e "$AlarmsFiltered" | grep -c . 2>/dev/null
     exit 0
   fi
 else
