@@ -1,0 +1,57 @@
+#!/bin/bash
+#Get BGP neighbors from device with ip $2 and community $3 and export as JSON
+OID=".1.3.6.1.4.1.9.9.187.1.2.4.1.1"
+OIDesc=`printf "%q." "$OID" 2>/dev/null`
+TIMEOUTSHORT=0.1
+TIMEOUTLONG=0.5
+
+BGPPeerAcceptedPrefixes=`snmpwalk -v2c -c $3 -Onq -r 0 -t $TIMEOUTLONG $2 $OID 2>/dev/null`
+
+if [ $? -eq 0 ]
+then
+  #Succefully received time value or "No OID available" message
+  if [[ $BGPPeerAcceptedPrefixes == No* ]]
+  then
+    # No such OID available. Device does not support NTP MIB. Quitting with no error.
+    echo "-100501"
+    exit 0
+  else
+    # get ARPs and interface descriptions to match with BGP neighbor
+    ARPS=`snmpwalk -r 0 -t $TIMEOUTSHORT -v2c -c $3 -Oqn $2 .1.3.6.1.2.1.3.1.1.2 2>/dev/null`
+    if [[ $ARPS == *No* ]]; then
+      ARPS=`snmpwalk -r 0 -t $TIMEOUTSHORT -v2c -c $3 -Oqn $2 .1.3.6.1.2.1.4.35.1.4 2>/dev/null`
+    fi
+    #>&2 echo "|$ARPS|"
+    IFDESCRS=`snmpwalk -r 0 -t $TIMEOUTLONG -v2c -c $3 -Oqn $2 .1.3.6.1.2.1.31.1.1.1.18 | grep -Ev "unrouted VLAN|^.* $" 2>/dev/null`
+    #>&2 echo "|$IFDESCRS|"
+
+    IFS='
+'
+
+    for BGPPrefix in $BGPPeerAcceptedPrefixes; do
+      SNMPIndex=${BGPPrefix#"$OIDesc"}
+      SNMPIndex=`echo $SNMPIndex | cut -d' ' -f 1`
+      SNMPValue=`echo $SNMPIndex | cut -d'.' -f "1-4"`
+
+      GREPIP=`echo "$SNMPValue "`
+      ARPSTR=`echo -e "$ARPS" | grep $GREPIP 2>/dev/null`
+      IFACEID=`echo "$ARPSTR" | cut -f12 -d"."`
+      if [ -z "$IFACEID" ]; then
+            IFACEDESCR=""
+          else
+        IFACEDESCROID="\.1\.3\.6\.1\.2\.1\.31\.1\.1\.1\.18\.$IFACEID"
+        IFACEDESCR=`echo "$IFDESCRS" | grep $IFACEDESCROID 2>/dev/null`
+      fi
+      SNMPDescr=`echo $IFACEDESCR | cut -d' ' -f 2-`
+
+      jq -n --arg SNMPIndex "$SNMPIndex" --arg SNMPValue "$SNMPValue" --arg SNMPDescr "$SNMPDescr" '{"{#SNMPINDEX}": $SNMPIndex, "{#SNMPVALUE}": $SNMPValue, "{#SNMPDESCR}": $SNMPDescr}'
+    done | jq -n '.data |= [inputs]'
+    exit 0
+  fi
+else
+  # Wrong community specified or smth. Cannot retrive OID value. Quitting with error.
+  echo "-100500"
+  exit 0
+fi
+
+

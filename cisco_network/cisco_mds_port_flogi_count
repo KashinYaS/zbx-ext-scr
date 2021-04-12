@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Get number of flogi on interface with SNMPINDEX $4 from device with ip $2 community $3
+
+Flogi=`snmpbulkwalk -v2c -c $3 -Oqv -r 0 -t 1.5 $2 ".1.3.6.1.4.1.9.9.289.1.1.5.1.3.$4" 2>/dev/null`
+
+if [ $? -eq 0 ]
+then
+  #Succefully received FLOGI WWNs count or "No OID available" message
+  if [[ $Flogi == No* ]]
+  then
+    # No such OID available - Ok. Means there is no flogi on port - return 0.
+    echo "0"
+    exit 0
+  else
+    echo -e "$Flogi" | grep -c . 2>/dev/null
+#    echo "$Flogi"
+    exit 0
+  fi
+else
+  # Community is wrong, connection timeout or something else
+  echo "-2"
+  exit 2
+fi
+
