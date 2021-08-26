@@ -33,7 +33,7 @@ then
       ARPSTR=`echo -e "$ARPS" | grep $GREPIP 2>/dev/null`
       IFACEID=`echo "$ARPSTR" | cut -f12 -d"."`
       IFACEDESCROID="\.1\.3\.6\.1\.2\.1\.31\.1\.1\.1\.18\.$IFACEID"
-      IFACEDESCR=`echo "$IFDESCRS" | grep $IFACEDESCROID 2>/dev/null`
+      IFACEDESCR=`echo -e "$IFDESCRS" | grep "$IFACEDESCROID\s" 2>/dev/null`
       #>&2 echo "|$GREPIP|"
       OSPFNBRNAME=`snmpget -r 0 -t $TIMEOUTSHORT -v2c -c $3 -Oqnv $OSPFNBR 1.3.6.1.2.1.1.5.0 2>/dev/null | cut -f1 -d"."`
       if [ -n "$OSPFNBRNAME" ]; then
