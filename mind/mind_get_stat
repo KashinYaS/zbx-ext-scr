@@ -1,0 +1,49 @@
+#!/bin/bash
+generate_post_data()
+{
+  cat <<EOF
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:api="http://api.soap.web.videoconference.mind.com/"
+  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+    <soapenv:Header>
+        <wsse:Security>
+            <wsse:UsernameToken>
+                <wsse:Username>$1</wsse:Username>
+                <wsse:Password>$2</wsse:Password>
+                <wsse:Domain>imind.ru@80</wsse:Domain>
+            </wsse:UsernameToken>
+        </wsse:Security>
+        <soapenv:Header/>
+        <soapenv:Body>
+            <api:getDetailStatistics>
+                <onlyWithBroadcasters>false</onlyWithBroadcasters>
+            </api:getDetailStatistics>
+        </soapenv:Body>
+    </soapenv:Envelope>
+EOF
+}
+
+RESULT=$(curl -s -X POST "$1/com.mind.videoconference.server/ConferenceExternalWebService/Conference" \
+   -H "Content-Type: application/xml" \
+   -H "Accept: application/xml" \
+   -d "$(generate_post_data "$2" "$3")" | recode html..utf-8 | sed 's/@/_/g' | xsltproc mind_xsl_statistics.xml - 2>/dev/null)
+if [ $? -eq 0 ]
+then
+  #echo -e "$RESULT"
+  if [ -z "$RESULT" ]
+  then
+    echo "-2"
+    exit 0
+  else
+    if [ -n "$4"  ]
+    then
+      echo -e "$RESULT" | grep -iw "$4" | cut -d' ' -f2
+      exit 0
+    else
+      echo -e "$RESULT"
+      exit 0
+    fi
+  fi
+else
+  echo "-1"
+  exit 0
+fi
