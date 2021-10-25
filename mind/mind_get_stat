@@ -25,7 +25,7 @@ EOF
 RESULT=$(curl -s -k -X POST "$1/com.mind.videoconference.server/ConferenceExternalWebService/Conference" \
    -H "Content-Type: application/xml" \
    -H "Accept: application/xml" \
-   -d "$(generate_post_data "$2" "$3")" | recode html..utf-8 | sed 's/@/_/g' | xsltproc mind_xsl_statistics.xml - 2>/dev/null)
+   -d "$(generate_post_data "$2" "$3")" | recode html..utf-8 | sed 's/@/_/g' | xsltproc /usr/lib/zabbix/externalscripts/mind_xsl_statistics.xml - 2>/dev/null)
 if [ $? -eq 0 ]
 then
   #echo -e "$RESULT"

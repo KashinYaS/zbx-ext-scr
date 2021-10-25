@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:icom="http://www.emersonnetworkpower.com/icom" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:output method="text"/>
+  <xsl:template match="return">
+    <xsl:text>activeEventsCount </xsl:text>
+    <xsl:value-of select="activeEventsCount"/>
+    <xsl:text>
+</xsl:text>
+    <xsl:text>participantsCount </xsl:text>
+    <xsl:value-of select="participantsCount"/>
+    <xsl:text>
+</xsl:text>
+    <xsl:text>sipParticipantsCount </xsl:text>
+    <xsl:value-of select="sipParticipantsCount"/>
+    <xsl:text>
+</xsl:text>
+  </xsl:template>
+</xsl:stylesheet>
