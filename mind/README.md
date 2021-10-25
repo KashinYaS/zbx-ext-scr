@@ -1,3 +1,3 @@
 ## iMind conference statistics
-- mind_get_stat - get iMind conference statistics via API
+- mind_get_stat - get iMind conference statistics via API<br/>
 Remove "-k" insecure SSL in production environment!
