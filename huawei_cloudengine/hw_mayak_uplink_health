@@ -1,0 +1,85 @@
+#!/bin/bash
+
+SNMPTimeout=0.5
+UplinkPattern="GigabitEthernet0/0/[89]"
+TunnelPattern="Tunnel0/0/[0-9]\+"
+
+IFDescr=$(snmpbulkwalk -v2c -c "$3" -Oqn -r 0 -t $SNMPTimeout "$2" .1.3.6.1.2.1.2.2.1.2  2>/dev/null)
+UplinkID=$(echo -e "$IFDescr" | grep -i "$UplinkPattern" | cut -d' ' -f 1 | cut -d'.' -f 12)
+TunnelID=$(echo -e "$IFDescr" | grep -i "$TunnelPattern" | cut -d' ' -f 1 | cut -d'.' -f 12)
+ipAdrrEntry=$(snmpbulkwalk -v2c -c "$3" -Oqn -r 0 -t $SNMPTimeout "$2" .1.3.6.1.2.1.4.20.1 | cut -d'.' -f11-  2>/dev/null)
+ipNetToMediaIfIndex=$(snmpbulkwalk -v2c -c "$3" -Oqn -r 0 -t $SNMPTimeout "$2" .1.3.6.1.2.1.4.22.1.1 | cut -d'.' -f13-  2>/dev/null)
+hwOspfv2NeighborTable=$(snmpbulkwalk -v2c -c "$3" -Oqn -r 0 -t $SNMPTimeout "$2" 1.3.6.1.4.1.2011.5.25.155.6 | cut -d'.' -f14- 2>/dev/null)
+hwTunnelCfgEntry=$(snmpbulkwalk -v2c -c "$3" -Oqn -r 0 -t $SNMPTimeout "$2" .1.3.6.1.4.1.2011.5.25.201.1.1.1 | cut -d'.' -f15- 2>/dev/null)
+
+
+OLDIFS=$IFS
+IFS=$'\n'
+
+BothID=$(echo -e "$UplinkID\n$TunnelID")
+
+InterfacesJSON=$(jq -n '{"Interfaces": []}')
+
+for ID in $BothID; do
+  IFProperty=$(snmpget -v2c -c "$3" -Oq -r 0 -t $SNMPTimeout "$2" \
+    ".1.3.6.1.2.1.2.2.1.2.$ID" \
+    ".1.3.6.1.2.1.2.2.1.4.$ID" \
+    ".1.3.6.1.2.1.2.2.1.5.$ID" \
+    ".1.3.6.1.2.1.2.2.1.7.$ID" \
+    ".1.3.6.1.2.1.2.2.1.8.$ID" \
+    ".1.3.6.1.2.1.2.2.1.14.$ID" \
+    ".1.3.6.1.2.1.31.1.1.1.18.$ID" \
+    | cut -d":" -f3 | sed -n "s/^\(.*\)\.[0-9]\+\s\(.*$\)/\1: \2/p" \
+    2>/dev/null)
+  JSON=$(jq -n --arg ifIndex "$ID" '{ifIndex: $ifIndex}')
+  for PROP in $IFProperty; do
+    Name=$(echo "$PROP" | cut -d' ' -f1 | tr -d '"' | tr -d ':')
+    Value=$(echo "$PROP" | cut -d' ' -f2- | tr -d '"')
+    #echo "$Name | $Value"
+    JSON=$(echo "$JSON" | jq --arg argname "$Name" --arg argvalue "$Value" '. + {"\($argname)": $argvalue}')
+  done
+  IPaddr=$(echo -e "$ipAdrrEntry" | grep "^2\..*\s$ID\+$" | cut -d' ' -f1 | cut -d'.' -f2-)
+  PaddedIPAddr=$(echo "$IPaddr" | sed "s/\./\\\./g")
+  IPMask=$(echo -e "$ipAdrrEntry" | grep "^3\.$PaddedIPAddr\s.\+$"| cut -d' ' -f2-)
+  if [ -n "$IPaddr" ]; then
+    JSON=$(echo "$JSON" | jq  --arg argvalue "$IPaddr" '. + {"IPAddress": $argvalue}')
+    JSON=$(echo "$JSON" | jq  --arg argvalue "$IPMask" '. + {"IPMask": $argvalue}')
+  fi
+  PeerARPCount=$(echo "$ipNetToMediaIfIndex" | grep -v "^$PaddedIPAddr\s.*" | grep ".*\s$ID" | wc -l)
+  if [ "$PeerARPCount" -ne 0 ]; then
+    JSON=$(echo "$JSON" | jq  --arg argvalue "$PeerARPCount" '. + {"ARPCount": $argvalue}')
+  fi
+
+  TunnelDetails=$(echo -e "$hwTunnelCfgEntry" | grep "^[0-9]\+\.$ID\s.*" )
+  if [ -n "$TunnelDetails" ]; then
+    PHYInterface=$(echo -e "$TunnelDetails" | grep "^3\+\.$ID\s.*" | cut -d' ' -f2)
+    DSTIP=$(echo -e "$TunnelDetails" | grep "^6\+\.$ID\s.*" | cut -d' ' -f2)
+    SRCIP=$(echo -e "$TunnelDetails" | grep "^5\+\.$ID\s.*" | cut -d' ' -f2)
+    JSON=$(echo "$JSON" | jq  --argjson PHYInterface "$PHYInterface" --argjson DSTIP "$DSTIP" \
+            --argjson SRCIP "$SRCIP" '. + {"TunnelTransport": {"Interface" : $PHYInterface, "SourceIP": $SRCIP, "DestinationIP": $DSTIP }}')
+    PHYInterfaceDetails=$(echo "$InterfacesJSON" | jq --argjson ifDescr "$PHYInterface" '.Interfaces[] | select(."ifDescr"==$ifDescr )' | jq '{ifOperStatus,ifMtu,ifInErrors,ifAlias,ARPCount}')
+    JSON=$(echo "$JSON" | jq  --argjson PHYInterfaceDetails "$PHYInterfaceDetails" '.TunnelTransport += {"InterfaceDetails": $PHYInterfaceDetails}')
+  fi
+
+  #IFOSPFPeerIP=$(echo "$hwOspfv2NeighborTable" | grep "^9\.[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\.$ID\..*" | cut -d' ' -f1 | cut -d'.' -f8-)
+  IFOSPFPeerIP=$(echo "$hwOspfv2NeighborTable" | grep "^9\.\([0-9]\+\.\)\{5\}$ID\..*" | cut -d' ' -f1 | cut -d'.' -f8-)
+
+  if [ -n "$IFOSPFPeerIP" ]; then
+    JSON=$(echo "$JSON" | jq  '. + {"OSPFNeigbors": []}')
+    for PeerIP in $IFOSPFPeerIP; do
+      PaddedPeerIP=$(echo "$PeerIP" | sed "s/\./\\\./g")
+      PeerArea=$(echo "$hwOspfv2NeighborTable" | grep "^9\.\([0-9]\+\.\)\{5\}$ID\.$PaddedPeerIP.*" | cut -d' ' -f1 | cut -d'.' -f2)
+      PeerRouterID=$(echo "$hwOspfv2NeighborTable" | grep "^9\.\([0-9]\+\.\)\{5\}$ID\.$PaddedPeerIP.*" | cut -d' ' -f2)
+      PeerRouterState=$(echo "$hwOspfv2NeighborTable" | grep "^10\.\([0-9]\+\.\)\{5\}$ID\.$PaddedPeerIP.*" | cut -d' ' -f2)
+      PeerRouterMTU=$(echo "$hwOspfv2NeighborTable" | grep "^8\.\([0-9]\+\.\)\{5\}$ID\.$PaddedPeerIP.*" | cut -d' ' -f2)
+
+      JSON=$(echo "$JSON" | jq --arg PeerArea "$PeerArea" --arg PeerRouterID "$PeerRouterID" --arg PeerRouterState "$PeerRouterState" \
+              --arg PeerRouterMTU "$PeerRouterMTU" --arg PeerIP "$PeerIP" '.OSPFNeigbors += [{ "RouterID": $PeerRouterID, "State": $PeerRouterState, "MTU": $PeerRouterMTU, "IP": $PeerIP, "Area": $PeerArea}]')
+
+    done
+  fi
+
+  InterfacesJSON=$(echo "$InterfacesJSON" | jq  --argjson ifJSON "$JSON" '.Interfaces += [ $ifJSON ]')
+done
+
+echo -e "$InterfacesJSON"
