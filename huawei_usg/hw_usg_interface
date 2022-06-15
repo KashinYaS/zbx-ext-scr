@@ -1,0 +1,44 @@
+#!/bin/bash
+
+TIMEOUTSHORT=0.1
+TIMEOUTLONG=0.5
+
+#ifAlias = interface description in USG
+IFALIASES=`snmpwalk -r 0 -t $TIMEOUTLONG -v2c -c $3 -Oqn $2 .1.3.6.1.2.1.31.1.1.1.18 | grep -Ev "unrouted VLAN|^.* $" 2>/dev/null`
+
+if [ $? -eq 0 ]
+then
+  #Succefully received OSPF neighbors or "No OID available" message
+  if [[ $IFALIASES == No* ]]
+  then
+    # No such OID available. Device does not support NTP MIB. Quitting with no error.
+    jq -n '.data |= []'
+    exit 0
+  else
+    IFS=$'
+'
+    #ifDescr = interface hardware in USG
+    IFDESCRS=`snmpwalk -r 0 -t $TIMEOUTLONG -v2c -c $3 -Oqn $2 .1.3.6.1.2.1.2.2.1.2 | grep -Ev "unrouted VLAN|^.* $" 2>/dev/null`
+
+    for IFALIAS in $IFALIASES; do
+      SNMPINDEX=`echo "$IFALIAS" | cut -f1 -d" " |cut -f13 -d"."`
+      SNMPDESCR=`echo "$IFALIAS" | cut -f2- -d" "`
+      SNMPVALUEPHY=`echo  "$IFDESCRS" | grep "\.1\.3\.6\.1\.2\.1\.2\.2\.1\.2\.$SNMPINDEX\s" | cut -f2- -d" "`
+      #SNMPVALUEPHY=`echo "$SNMPVALUEPHY" | sed 's/GigabitEthernet/Gi/gI'`
+      DEFAULTDESCR=`echo  "$SNMPDESCR" | grep -c "Huawei.*USG66[0-9][0-9] Series.*"`
+      if [ $DEFAULTDESCR -gt 0 ]
+      then
+        #SNMPVALUEPHY=`echo "$SNMPVALUEPHY ($SNMPDESCR)"`
+        SNMPDESCR=''
+      fi
+        jq -n --arg SNMPVALUEPHY "$SNMPVALUEPHY" --arg SNMPINDEX "$SNMPINDEX" --arg SNMPDESCR "$SNMPDESCR" '{"{#SNMPVALUEPHY}": $SNMPVALUEPHY, "{#SNMPINDEX}": $SNMPINDEX, "{#SNMPVALUEDESCR}": $SNMPDESCR}'
+    done | jq -n '.data |= [inputs]'
+    exit 0
+  fi
+else
+  # Wrong community specified or smth. Cannot retrive OID value. Quitting with error.
+  echo "-100500"
+  exit 0
+fi
+
+

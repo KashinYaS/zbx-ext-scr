@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Parameters
+# $1 - ip address
+# $2 - SNMP Community
+
+TIMEOUTSHORT=0.1
+TIMEOUTLONG=0.5
+
+
+#ifAlias = interface description in USG
+SECPOLNAMES=$(snmpbulkwalk -r 0 -t $TIMEOUTLONG -Cc -v2c -c $2 -Oqn $1 .1.3.6.1.4.1.2011.6.122.15.8.1.1.2 2>/dev/null)
+
+if [ $? -eq 0 ]
+then
+  #Succefully received Security Policy Names or "No OID available" message
+  if [[ $SECPOLNAMES == No* ]]
+  then
+    # No such OID available. Device does not support Security policy statistics MIB. Quitting with no error.
+    jq -n '.data |= []'
+    exit 0
+  else
+    SECPOLNAMES=$(echo -e "$SECPOLNAMES" | cut -d'.' -f16-)
+
+    SECPOLVSYS=$(snmpbulkwalk -r 0 -t $TIMEOUTLONG -Cc -v2c -c $2 -Oqn $1 .1.3.6.1.4.1.2011.6.122.15.8.1.1.1 2>/dev/null | cut -d'.' -f16-)
+
+    IFS=$'
+'
+    for SECPOL in $SECPOLNAMES; do
+      SNMPINDEX=$(echo "$SECPOL" | cut -d" " -f1)
+      SNMPDESCR=$(echo "$SECPOL" | cut -d" " -f2 | sed -e 's/^"//' -e 's/"$//')
+      DESCRLEN=${#SNMPDESCR}
+      INDEXLEN=$(echo "$SNMPINDEX" | sed 's/[^\.]//g' | wc -c)
+      VSYSNAMELEN=$(expr $INDEXLEN - $DESCRLEN - 1)
+      VSYSNAMEDEC=$(echo "$SNMPINDEX" | cut -d"." -f2-$VSYSNAMELEN | sed -e 's/\./\n/g')
+#      VSYSNAME=""
+#      for CHARCODE in $VSYSNAMEDEC; do
+#        HEXCHARCODE=$(printf %o $CHARCODE)
+#       CURRENTCHAR=$(printf "\\$HEXCHARCODE")
+#       VSYSNAME="${VSYSNAME}${CURRENTCHAR}"
+#      done
+      VSYSNAME=$(echo -e "$SECPOLVSYS" | grep -w "$SNMPINDEX" | cut -d' ' -f2 | sed -e 's/^"//' -e 's/"$//')
+      if [[ (-n $VSYSNAME) && ($VSYSNAME != 'public') ]]
+      then
+        SNMPDESCR="[${VSYSNAME}] ${SNMPDESCR}"
+      fi
+      jq -n --arg SNMPINDEX "$SNMPINDEX" --arg SNMPDESCR "$SNMPDESCR" '{"{#SNMPINDEX}": $SNMPINDEX, "{#SNMPDESCR}": $SNMPDESCR}'
+    done | jq -n '.data |= [inputs]'
+    exit 0
+  fi
+else
+  # Wrong community specified or smth. Cannot retrive OID value. Quitting with no error but empty dataset.
+  jq -n '.data |= []'
+  exit 0
+fi
+
+
