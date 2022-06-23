@@ -1,0 +1,1307 @@
+zabbix_export:
+  version: '5.4'
+  date: '2022-06-23T06:37:06Z'
+  groups:
+    -
+      uuid: 39e25b9672344f8c82b8152d9f74d7c6
+      name: 'Отдел ОРТИ/Templates'
+  templates:
+    -
+      uuid: 21312c0d39234b0ab9a21cb2c7104206
+      template: Template_ORTI_2.2_Huawei_OceanStor
+      name: Template_ORTI_2.2_Huawei_OceanStor
+      groups:
+        -
+          name: 'Отдел ОРТИ/Templates'
+      items:
+        -
+          uuid: dd4c7402fef241659e29ad3835ee0399
+          name: ESN
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.34774.4.1.1.1.0
+          key: deviceId.0
+          delay: 2h
+          trends: '0'
+          value_type: CHAR
+          inventory_link: SERIALNO_A
+          tags:
+            -
+              tag: Application
+              value: Inventory
+        -
+          uuid: ed4bf7505d0b432986cf13799dc2804c
+          name: 'Alarms Count'
+          type: EXTERNAL
+          key: 'hw_os_alarms["{HOST.CONN}","{IPADDRESS}","{$SNMP_COMMUNITY}"]'
+          delay: 5m
+          tags:
+            -
+              tag: Application
+              value: Health
+          triggers:
+            -
+              uuid: f4f80082af254f1194f83c886a731bfb
+              expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hw_os_alarms["{HOST.CONN}","{IPADDRESS}","{$SNMP_COMMUNITY}"])>0'
+              name: 'Active Alarms: {ITEM.VALUE}'
+              opdata: 'Now: {ITEM.LASTVALUE}'
+              priority: HIGH
+              description: 'Warning! Storage pool exhaust alert is ignored by this trigger!'
+        -
+          uuid: 5d5e34aecb7a423ab8166a1d7eff40ea
+          name: Ping
+          type: SIMPLE
+          key: icmpping
+          delay: '60'
+          history: 7d
+          trends: 120d
+          valuemap:
+            name: 'ICMP Ping Status'
+          tags:
+            -
+              tag: Application
+              value: Availability
+          triggers:
+            -
+              uuid: d9bb600776d04c13a62d5b3815ae8f82
+              expression: 'max(/Template_ORTI_2.2_Huawei_OceanStor/icmpping,150s)<1'
+              name: unavailable
+              priority: HIGH
+        -
+          uuid: d108ee79393445059d7f17553308e713
+          name: 'System Status'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.34774.4.1.1.3.0
+          key: status.0
+          delay: 10m
+          valuemap:
+            name: 'Huawei: OceanStor Health'
+          tags:
+            -
+              tag: Application
+              value: Health
+          triggers:
+            -
+              uuid: a1c26251b7f74f8bb0697bfbf5f28a04
+              expression: last(/Template_ORTI_2.2_Huawei_OceanStor/status.0)<>1
+              name: 'Storage Health Status: {ITEM.VALUE}'
+              opdata: 'Now: {ITEM.LASTVALUE}'
+              priority: WARNING
+        -
+          uuid: 9aa49f99697549889d605fb127a5a173
+          name: 'System Name'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.2.1.1.5.0
+          key: sysName.0
+          delay: 10m
+          trends: '0'
+          value_type: CHAR
+          inventory_link: NAME
+          tags:
+            -
+              tag: Application
+              value: Inventory
+        -
+          uuid: 786a0120be2d42d39d92433c3644cdb9
+          name: 'Firmware version'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.34774.4.1.1.6.0
+          key: version.0
+          delay: 10m
+          trends: '0'
+          value_type: CHAR
+          inventory_link: SOFTWARE
+          tags:
+            -
+              tag: Application
+              value: Inventory
+      discovery_rules:
+        -
+          uuid: c8ed8484057d452c9c9bc0436f4c0ea3
+          name: BBU
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.34774.4.1.23.5.5.1.2,{#BBUID},1.3.6.1.4.1.34774.4.1.23.5.5.1.1]'
+          key: discovery.hwInfoBBULocation
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: 8790d43f243c456387049e7d435efa05
+              name: 'BBU {#BBUID} ({#SNMPVALUE}) Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.5.5.1.3.{#SNMPINDEX}'
+              key: 'hwInfoBBUHealthStatus.[{#SNMPINDEX}]'
+              delay: 10m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Health
+              trigger_prototypes:
+                -
+                  uuid: 167a966323744906a98a9257ef3dbd28
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwInfoBBUHealthStatus.[{#SNMPINDEX}])<>1'
+                  name: 'BBU {#BBUID} ({#SNMPVALUE}) Health Status: {ITEM.VALUE}'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: WARNING
+        -
+          uuid: e3bb889336a241759ce85ba34420da15
+          name: Controller
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.2.1.1]'
+          key: discovery.hwInfoControllerID
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: d8a290ceb7b24a5683155d94444f90b9
+              name: 'Controller {#SNMPVALUE} CPU Usage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.5.2.1.8.{#SNMPINDEX}'
+              key: 'hwInfoControllerCPUUsage.[{#SNMPINDEX}]'
+              delay: 2m
+              history: 30d
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: 98e8f8cdbfb14a7294433f2ca0bf5090
+              name: 'Controller {#SNMPVALUE} Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.5.2.1.2.{#SNMPINDEX}'
+              key: 'hwInfoControllerHealthStatus.[{#SNMPINDEX}]'
+              delay: 2m
+              history: 30d
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Health
+            -
+              uuid: c848e0ef44f941dc802fd39fa18952ff
+              name: 'Controller {#SNMPVALUE} Memory Usage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.5.2.1.9.{#SNMPINDEX}'
+              key: 'hwInfoControllerMemoryUsage.[{#SNMPINDEX}]'
+              delay: 2m
+              history: 30d
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+          graph_prototypes:
+            -
+              uuid: aa709d185ddd495ba5e066d61b8555fa
+              name: 'Controller {#SNMPVALUE} CPU and Memory Usage'
+              height: '150'
+              graph_items:
+                -
+                  color: 1A7C11
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoControllerCPUUsage.[{#SNMPINDEX}]'
+                -
+                  sortorder: '1'
+                  color: 4000FF
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoControllerMemoryUsage.[{#SNMPINDEX}]'
+        -
+          uuid: 175f116fb6a64072b27fbeece0cc3eb4
+          name: Disk
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.1.1.4]'
+          key: discovery.hwInfoDiskLocation
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: 15321b5e750242969f585e067cc9d370
+              name: 'Disk {#SNMPVALUE} Health Status'
+              type: EXTERNAL
+              key: 'hw_os_single_disk["{HOST.CONN}","{IPADDRESS}","{$SNMP_COMMUNITY}","{#SNMPINDEX}"]'
+              delay: 30m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: 'Health - Disks'
+              trigger_prototypes:
+                -
+                  uuid: c7beefc2b4a14b32ab9f993fd2d84fd6
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hw_os_single_disk["{HOST.CONN}","{IPADDRESS}","{$SNMP_COMMUNITY}","{#SNMPINDEX}"])<>1'
+                  name: 'Disk  {#SNMPVALUE} Health Status: {ITEM.VALUE}'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: INFO
+                  dependencies:
+                    -
+                      name: unavailable
+                      expression: 'max(/Template_ORTI_2.2_Huawei_OceanStor/icmpping,150s)<1'
+        -
+          uuid: aa1ab749daf14b40bce2c1d4f1efbe21
+          name: Enclosure
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.6.1.2]'
+          key: discovery.hwInfoEnclosureName
+          delay: 30m
+          filter:
+            conditions:
+              -
+                macro: '{#SNMPVALUE}'
+                value: '^CTE.*$'
+                operator: NOT_MATCHES_REGEX
+                formulaid: A
+          item_prototypes:
+            -
+              uuid: 8df2352be8834c9ebc82137e9920850e
+              name: 'Enclosure {#SNMPVALUE} Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.5.6.1.4.{#SNMPINDEX}'
+              key: 'hwInfoEnclosureHealthStatus.[{#SNMPINDEX}]'
+              delay: 2m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Health
+              trigger_prototypes:
+                -
+                  uuid: 48bd433f82d34fb28b0b5631b26c3ed2
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwInfoEnclosureHealthStatus.[{#SNMPINDEX}])<>1'
+                  name: 'Enclosure  {#SNMPVALUE} Health Status: {ITEM.VALUE}'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: WARNING
+            -
+              uuid: 823da0574a754d799d88148a2b789547
+              name: 'Enclosure {#SNMPVALUE} ESN'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.5.6.1.9.{#SNMPINDEX}'
+              key: 'hwInfoEnclosureSN.[{#SNMPINDEX}]'
+              delay: 8h
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: Application
+                  value: Inventory
+            -
+              uuid: 5e5ec1300fde42c08feb1618a27e37c6
+              name: 'Enclosure {#SNMPVALUE} Temperature'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.5.6.1.8.{#SNMPINDEX}'
+              key: 'hwInfoEnclosureTemperature.[{#SNMPINDEX}]'
+              delay: 2m
+              units: °C
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Environment
+        -
+          uuid: 63e06adec1234c0e8e7cb9729f886e67
+          name: 'Controller Enclosure'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.6.1.2]'
+          key: discovery.hwInfoEnclosureName.CTE
+          delay: 30m
+          filter:
+            conditions:
+              -
+                macro: '{#SNMPVALUE}'
+                value: '^CTE.*$'
+                formulaid: A
+          item_prototypes:
+            -
+              uuid: 5a33e94511df4abb8f44dc7669d0709c
+              name: 'Enclosure {#SNMPVALUE} Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.5.6.1.4.{#SNMPINDEX}'
+              key: 'hwInfoEnclosureHealthStatus.CTE.[{#SNMPINDEX}]'
+              delay: 2m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Health
+              trigger_prototypes:
+                -
+                  uuid: 05adc262cb7e4b73a934ef8fefb8ebc8
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwInfoEnclosureHealthStatus.CTE.[{#SNMPINDEX}])<>1'
+                  name: 'Enclosure  {#SNMPVALUE} Health Status: {ITEM.VALUE}'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: AVERAGE
+            -
+              uuid: 7605da7f215a4e5c841e2e439a3649da
+              name: 'Enclosure {#SNMPVALUE} ESN'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.5.6.1.9.{#SNMPINDEX}'
+              key: 'hwInfoEnclosureSN.CTE.[{#SNMPINDEX}]'
+              delay: 8h
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: Application
+                  value: Inventory
+            -
+              uuid: 836e4ff8f42e46acba80a30fa4cff873
+              name: 'Enclosure {#SNMPVALUE} Temperature'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.5.6.1.8.{#SNMPINDEX}'
+              key: 'hwInfoEnclosureTemperature.CTE.[{#SNMPINDEX}]'
+              delay: 2m
+              units: °C
+              tags:
+                -
+                  tag: Application
+                  value: Environment
+              trigger_prototypes:
+                -
+                  uuid: b20c6a0a5abe4f47b01a9077264937f2
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwInfoEnclosureTemperature.CTE.[{#SNMPINDEX}])>32'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwInfoEnclosureTemperature.CTE.[{#SNMPINDEX}])<27'
+                  name: 'Temperature of {#SNMPVALUE} is high: {ITEM.VALUE}'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: HIGH
+        -
+          uuid: d1d103719d424dcbaa1c7fca654c1403
+          name: PSU
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.3.1.2]'
+          key: discovery.hwInfoPowerLocation
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: 6d3db07501ab4600849b7ea40a2a5d76
+              name: '{#SNMPVALUE} Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.5.3.1.3.{#SNMPINDEX}'
+              key: 'hwInfoPowerHealthStatus.[{#SNMPINDEX}]'
+              delay: 2m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: 'Health - PSU'
+              trigger_prototypes:
+                -
+                  uuid: 3ccf7f4944ad4e8b912143ad5446fc59
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwInfoPowerHealthStatus.[{#SNMPINDEX}])<>1'
+                  name: 'PSU {#SNMPVALUE} Health Status: {ITEM.VALUE}'
+                  priority: WARNING
+        -
+          uuid: e5f40cdd5575423292e3a132b50e12d2
+          name: 'Storage Pool'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.4.2.1.2]'
+          key: discovery.hwInfoStoragePoolName
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: da6efc7c670441e2b1f7d42fff7a292a
+              name: 'Pool {#SNMPVALUE} Compression Ratio'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.26.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolCompressionRatio.[{#SNMPINDEX}]'
+              delay: 10m
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: 08335bd0f9db44e9b371cad6cae606f4
+              name: 'Pool {#SNMPVALUE} Data Reduction Ratio'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.24.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolDataReductionRatio.[{#SNMPINDEX}]'
+              delay: 10m
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: 8654eafc53444e83b1b82a78a6f01816
+              name: 'Pool {#SNMPVALUE} Deduplication Ratio'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.25.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolDeduplicationRatio.[{#SNMPINDEX}]'
+              delay: 10m
+              trends: '0'
+              value_type: CHAR
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: 98e54aae60604445b419d1f355bfdfa9
+              name: 'Pool {#SNMPVALUE} Free Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.9.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolFreeCapacity.[{#SNMPINDEX}]'
+              delay: 10m
+              units: B
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: e3bfe4000efe4f8fa4d6bb37127eba25
+              name: 'Pool {#SNMPVALUE} Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.5.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolHealthStatus.[{#SNMPINDEX}]'
+              delay: 10m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: 4df7073107cc443087e7dfd2c0d9318d
+              name: 'Pool {#SNMPVALUE} LUN Total Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.23.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolLunTotalCapacity.[{#SNMPINDEX}]'
+              delay: 10m
+              units: B
+              description: 'Суммарный размер всех LUN''ов пула'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: bb47f99c768942a39295823c6b529833
+              name: 'Pool {#SNMPVALUE} Subscribed Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.8.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolSubscribedCapacity.[{#SNMPINDEX}]'
+              delay: 10m
+              units: B
+              description: 'Записано в пул фактически (для Dorado - после Data Reduction , Compression и Deduplication)'
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: 1d1a4bd86f7d4a70b6b9f890533ebbd5
+              name: 'Pool {#SNMPVALUE} Total Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.23.4.2.1.7.{#SNMPINDEX}'
+              key: 'hwInfoStoragePoolTotalCapacity.[{#SNMPINDEX}]'
+              delay: 10m
+              units: B
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+          graph_prototypes:
+            -
+              uuid: 33b79218a57a4d03a2c4fcb4bf9fb5dd
+              name: 'Storage Pool {#SNMPVALUE} Usage'
+              graph_items:
+                -
+                  color: 1A7C11
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoStoragePoolLunTotalCapacity.[{#SNMPINDEX}]'
+                -
+                  sortorder: '1'
+                  color: F63100
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoStoragePoolSubscribedCapacity.[{#SNMPINDEX}]'
+                -
+                  sortorder: '2'
+                  color: 2774A4
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoStoragePoolTotalCapacity.[{#SNMPINDEX}]'
+        -
+          uuid: fba1c4b1c1fe4d43a05f3a75d3ed14e7
+          name: 'Performance Node'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.21.3.1.1]'
+          key: discovery.hwPerfNodeIfIndex
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: e60f80277eeb4c889bc242be6461a2db
+              name: 'Node {#SNMPVALUE} Average Cache Usage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.3.{#SNMPINDEX}'
+              key: 'hwPerfNodeAvgCacheUsage.[{#SNMPINDEX}]'
+              delay: 2m
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: 10ab8ac80b9a4038b9d83943c3dd5001
+              name: 'Node {#SNMPVALUE} CPU Usage'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.2.{#SNMPINDEX}'
+              key: 'hwPerfNodeCPUUsage.[{#SNMPINDEX}]'
+              delay: 2m
+              units: '%'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+              trigger_prototypes:
+                -
+                  uuid: 56b602e7252e4fb88994a37831486a23
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwPerfNodeCPUUsage.[{#SNMPINDEX}],#5)>{$NODE_CPU_ALERT_UP}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwPerfNodeCPUUsage.[{#SNMPINDEX}],#5)<{$NODE_CPU_ALERT_DOWN}'
+                  name: 'High Node {#SNMPVALUE} CPU Usage'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: INFO
+            -
+              uuid: b75f061368dc4a67a24a7cf38585faae
+              name: 'Node {#SNMPVALUE} IOPS Read'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.6.{#SNMPINDEX}'
+              key: 'hwPerfNodeReadIOPS.[{#SNMPINDEX}]'
+              delay: 2m
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: e641bb71043743a49411640514c5f0f7
+              name: 'Node {#SNMPVALUE} BPS Read'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.9.{#SNMPINDEX}'
+              key: 'hwPerfNodeReadTraffic.[{#SNMPINDEX}]'
+              delay: 2m
+              units: Bps
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: f609fc53d7f244e5ae1b18505316e031
+              name: 'Node {#SNMPVALUE} IOPS Total'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.5.{#SNMPINDEX}'
+              key: 'hwPerfNodeTotalIOPS.[{#SNMPINDEX}]'
+              delay: 2m
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: ebe9e68f013e4fb0bbaf1fd317144c89
+              name: 'Node {#SNMPVALUE} BPS Total'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.8.{#SNMPINDEX}'
+              key: 'hwPerfNodeTotalTraffic.[{#SNMPINDEX}]'
+              delay: 2m
+              units: Bps
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: d048b83a3e04446aa9b560412e20ea46
+              name: 'Node {#SNMPVALUE} IOPS Write'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.7.{#SNMPINDEX}'
+              key: 'hwPerfNodeWriteIOPS.[{#SNMPINDEX}]'
+              delay: 2m
+              tags:
+                -
+                  tag: Application
+                  value: Load
+            -
+              uuid: de2353dc6c754b0fba7ac921258b187a
+              name: 'Node {#SNMPVALUE} BPS Write'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.34774.4.1.21.3.1.10.{#SNMPINDEX}'
+              key: 'hwPerfNodeWriteTraffic.[{#SNMPINDEX}]'
+              delay: 2m
+              units: Bps
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1000000'
+              tags:
+                -
+                  tag: Application
+                  value: Load
+          graph_prototypes:
+            -
+              uuid: 88670cd9a59849a58307da892a328c71
+              name: 'Performance Node {#SNMPVALUE} BPS'
+              height: '150'
+              graph_items:
+                -
+                  color: 4000FF
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeReadTraffic.[{#SNMPINDEX}]'
+                -
+                  sortorder: '1'
+                  color: F63100
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeTotalTraffic.[{#SNMPINDEX}]'
+                -
+                  sortorder: '2'
+                  color: BF00FF
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeWriteTraffic.[{#SNMPINDEX}]'
+                -
+                  sortorder: '3'
+                  color: 1A7C11
+                  yaxisside: RIGHT
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeCPUUsage.[{#SNMPINDEX}]'
+            -
+              uuid: 2b2750dddf0c4f4785b41479ce7c4fa5
+              name: 'Performance Node {#SNMPVALUE} IOPS'
+              height: '150'
+              graph_items:
+                -
+                  color: 4000FF
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeReadIOPS.[{#SNMPINDEX}]'
+                -
+                  sortorder: '1'
+                  color: AC8C14
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeTotalIOPS.[{#SNMPINDEX}]'
+                -
+                  sortorder: '2'
+                  color: BF00FF
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeWriteIOPS.[{#SNMPINDEX}]'
+                -
+                  sortorder: '3'
+                  color: 1A7C11
+                  yaxisside: RIGHT
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwPerfNodeCPUUsage.[{#SNMPINDEX}]'
+        -
+          uuid: 24e1ce3c638444b1b589bfb63cb1d050
+          name: 'Storage Controller'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.19.8.12.1.3]'
+          key: discovery.hwStorageControllerLocation
+          delay: 30m
+          item_prototypes:
+            -
+              uuid: 02ffac36483044039bbd5fc811b8fe88
+              name: 'Controller  {#SNMPVALUE} Health Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.19.8.12.1.4.{#SNMPINDEX}'
+              key: 'hwStorageControllerHealthStatus.[{#SNMPINDEX}]'
+              delay: 2m
+              valuemap:
+                name: 'Huawei: OceanStor Health'
+              tags:
+                -
+                  tag: Application
+                  value: Health
+              trigger_prototypes:
+                -
+                  uuid: 3cfd1cc66aca44169358b2e234c4dbad
+                  expression: 'last(/Template_ORTI_2.2_Huawei_OceanStor/hwStorageControllerHealthStatus.[{#SNMPINDEX}])<>1'
+                  name: 'Controller  {#SNMPVALUE} Health Status: {ITEM.VALUE}'
+                  opdata: 'Now: {ITEM.LASTVALUE}'
+                  priority: WARNING
+        -
+          uuid: 8e860465f9aa4fbb91b0674548213c73
+          name: LUN
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.4.8.1.2]'
+          key: snmp.discovery.hwInfoLunName
+          delay: 30m
+          status: DISABLED
+          filter:
+            conditions:
+              -
+                macro: '{#SNMPVALUE}'
+                value: '{$LUN_NAMES_REGEXP}'
+                formulaid: A
+          item_prototypes:
+            -
+              uuid: 48cfb749589340828d19ea60617146fe
+              name: 'LUN {#SNMPVALUE} Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.4.8.1.5.{#SNMPINDEX}'
+              key: 'hwInfoLunCapacity.[{#SNMPINDEX}]'
+              delay: 1h
+              units: B
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: b1247ca9fea6438a970bccd3177f2219
+              name: 'LUN {#SNMPVALUE} Protection Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.4.8.1.7.{#SNMPINDEX}'
+              key: 'hwInfoLunProtectionCapacity.[{#SNMPINDEX}]'
+              delay: 10m
+              units: B
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+            -
+              uuid: c45833e7b4de457e8b829d6deac19ab2
+              name: 'LUN {#SNMPVALUE} Running Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.4.8.1.10.{#SNMPINDEX}'
+              key: 'hwInfoLunRunningStatus.[{#SNMPINDEX}]'
+              delay: 10m
+              valuemap:
+                name: 'Huawei: OceanStor Running Status'
+            -
+              uuid: 6d21de1e05414cf7b454cbf3697994e8
+              name: 'LUN {#SNMPVALUE} Subscribed Capacity'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.34774.4.1.23.4.8.1.6.{#SNMPINDEX}'
+              key: 'hwInfoLunSubscribedCapacity.[{#SNMPINDEX}]'
+              delay: 10m
+              units: B
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '1048576'
+              tags:
+                -
+                  tag: Application
+                  value: Storage
+          graph_prototypes:
+            -
+              uuid: ab3459cbf28b431dadc1a04e1446bd41
+              name: 'LUN {#SNMPVALUE} Capacity'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoLunCapacity.[{#SNMPINDEX}]'
+                -
+                  sortorder: '2'
+                  color: F63100
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoLunProtectionCapacity.[{#SNMPINDEX}]'
+                -
+                  sortorder: '3'
+                  color: 2774A4
+                  item:
+                    host: Template_ORTI_2.2_Huawei_OceanStor
+                    key: 'hwInfoLunSubscribedCapacity.[{#SNMPINDEX}]'
+      macros:
+        -
+          macro: '{$LUN_NAMES_REGEXP}'
+          value: ^$
+          description: 'Regex for LUN Discovery by Name'
+        -
+          macro: '{$NODE_CPU_ALERT_DOWN}'
+          value: '73'
+        -
+          macro: '{$NODE_CPU_ALERT_UP}'
+          value: '78'
+        -
+          macro: '{$SNMP_COMMUNITY}'
+          value: public
+      dashboards:
+        -
+          uuid: 3f49b45471f04f5f9e039d936aa71063
+          name: Overview
+          pages:
+            -
+              widgets:
+                -
+                  type: GRAPH_PROTOTYPE
+                  'y': '10'
+                  width: '24'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: columns
+                      value: '1'
+                    -
+                      type: GRAPH_PROTOTYPE
+                      name: graphid
+                      value:
+                        name: 'Performance Node {#SNMPVALUE} IOPS'
+                        host: Template_ORTI_2.2_Huawei_OceanStor
+                -
+                  type: GRAPH_PROTOTYPE
+                  'y': '5'
+                  width: '24'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: columns
+                      value: '1'
+                    -
+                      type: GRAPH_PROTOTYPE
+                      name: graphid
+                      value:
+                        name: 'Performance Node {#SNMPVALUE} BPS'
+                        host: Template_ORTI_2.2_Huawei_OceanStor
+                -
+                  type: GRAPH_PROTOTYPE
+                  width: '24'
+                  height: '5'
+                  fields:
+                    -
+                      type: INTEGER
+                      name: columns
+                      value: '1'
+                    -
+                      type: GRAPH_PROTOTYPE
+                      name: graphid
+                      value:
+                        name: 'Controller {#SNMPVALUE} CPU and Memory Usage'
+                        host: Template_ORTI_2.2_Huawei_OceanStor
+      valuemaps:
+        -
+          uuid: f1b289387cf64f14b5113c1a5bca14ab
+          name: 'Huawei: OceanStor Health'
+          mappings:
+            -
+              value: '1'
+              newvalue: Normal
+            -
+              value: '2'
+              newvalue: Fault
+            -
+              value: '3'
+              newvalue: preFail
+            -
+              value: '4'
+              newvalue: 'Partially Broken'
+            -
+              value: '5'
+              newvalue: Degraded
+            -
+              value: '6'
+              newvalue: badSectorsFound
+            -
+              value: '7'
+              newvalue: bitErrorsFound
+            -
+              value: '8'
+              newvalue: consistent
+            -
+              value: '9'
+              newvalue: inconsistent
+            -
+              value: '10'
+              newvalue: busy
+            -
+              value: '11'
+              newvalue: noInput
+            -
+              value: '12'
+              newvalue: lowBattery
+            -
+              value: '13'
+              newvalue: singleLinkFault
+        -
+          uuid: 8518d1ee0f4a4e33a781be1808895aff
+          name: 'Huawei: OceanStor Running Status'
+          mappings:
+            -
+              value: '1'
+              newvalue: Normal
+            -
+              value: '2'
+              newvalue: Running
+            -
+              value: '3'
+              newvalue: 'Not running'
+            -
+              value: '4'
+              newvalue: 'Not existed'
+            -
+              value: '5'
+              newvalue: 'Sleep in high temperature'
+            -
+              value: '6'
+              newvalue: Starting
+            -
+              value: '7'
+              newvalue: 'Power failure protection'
+            -
+              value: '8'
+              newvalue: 'Spin down'
+            -
+              value: '9'
+              newvalue: Started
+            -
+              value: '10'
+              newvalue: 'Link Up'
+            -
+              value: '11'
+              newvalue: 'Link Down'
+            -
+              value: '12'
+              newvalue: 'Powering on'
+            -
+              value: '13'
+              newvalue: 'Powered off'
+            -
+              value: '14'
+              newvalue: Pre-copy
+            -
+              value: '15'
+              newvalue: Copyback
+            -
+              value: '16'
+              newvalue: Reconstruction
+            -
+              value: '17'
+              newvalue: Expansion
+            -
+              value: '18'
+              newvalue: Unformatted
+            -
+              value: '19'
+              newvalue: Formatting
+            -
+              value: '20'
+              newvalue: Unmapped
+            -
+              value: '21'
+              newvalue: 'Initial synchronizing'
+            -
+              value: '22'
+              newvalue: Consistent
+            -
+              value: '23'
+              newvalue: Synchronizing
+            -
+              value: '24'
+              newvalue: Synchronized
+            -
+              value: '25'
+              newvalue: Unsynchronized
+            -
+              value: '26'
+              newvalue: Split
+            -
+              value: '27'
+              newvalue: Online
+            -
+              value: '28'
+              newvalue: Offline
+            -
+              value: '29'
+              newvalue: Locked
+            -
+              value: '30'
+              newvalue: Enabled
+            -
+              value: '31'
+              newvalue: Disabled
+            -
+              value: '32'
+              newvalue: Balancing
+            -
+              value: '33'
+              newvalue: 'To be recovered'
+            -
+              value: '34'
+              newvalue: Interrupted
+            -
+              value: '35'
+              newvalue: Invalid
+            -
+              value: '36'
+              newvalue: 'Not start'
+            -
+              value: '37'
+              newvalue: Queuing
+            -
+              value: '38'
+              newvalue: Stopped
+            -
+              value: '39'
+              newvalue: Copying
+            -
+              value: '40'
+              newvalue: Completed
+            -
+              value: '41'
+              newvalue: Paused
+            -
+              value: '42'
+              newvalue: 'Reverse synchronizing'
+            -
+              value: '43'
+              newvalue: Activated
+            -
+              value: '44'
+              newvalue: Restore
+            -
+              value: '45'
+              newvalue: Inactive
+            -
+              value: '46'
+              newvalue: Idle
+            -
+              value: '47'
+              newvalue: 'Powering off'
+            -
+              value: '48'
+              newvalue: Charging
+            -
+              value: '49'
+              newvalue: 'Charging completed'
+            -
+              value: '50'
+              newvalue: Discharging
+            -
+              value: '51'
+              newvalue: Upgrading
+            -
+              value: '52'
+              newvalue: 'Power Lost'
+            -
+              value: '53'
+              newvalue: Initializing
+            -
+              value: '54'
+              newvalue: 'Apply change'
+            -
+              value: '55'
+              newvalue: 'Online disable'
+            -
+              value: '56'
+              newvalue: 'Offline disable'
+            -
+              value: '57'
+              newvalue: 'Online frozen'
+            -
+              value: '58'
+              newvalue: 'Offline frozen'
+            -
+              value: '59'
+              newvalue: Closed
+            -
+              value: '60'
+              newvalue: Removing
+            -
+              value: '61'
+              newvalue: 'In service'
+            -
+              value: '62'
+              newvalue: 'Out of service'
+            -
+              value: '63'
+              newvalue: 'Running normal'
+            -
+              value: '64'
+              newvalue: 'Running fail'
+            -
+              value: '65'
+              newvalue: 'Running success'
+            -
+              value: '66'
+              newvalue: 'Running success'
+            -
+              value: '67'
+              newvalue: 'Running failed'
+            -
+              value: '68'
+              newvalue: Waiting
+            -
+              value: '69'
+              newvalue: Canceling
+            -
+              value: '70'
+              newvalue: Canceled
+            -
+              value: '71'
+              newvalue: 'About to synchronize'
+            -
+              value: '72'
+              newvalue: 'Synchronizing data'
+            -
+              value: '73'
+              newvalue: 'Failed to synchronize'
+            -
+              value: '74'
+              newvalue: Fault
+            -
+              value: '75'
+              newvalue: Migrating
+            -
+              value: '76'
+              newvalue: Migrated
+            -
+              value: '77'
+              newvalue: Activating
+            -
+              value: '78'
+              newvalue: Deactivating
+            -
+              value: '79'
+              newvalue: 'Start failed'
+            -
+              value: '80'
+              newvalue: 'Stop failed'
+            -
+              value: '81'
+              newvalue: Decommissioning
+            -
+              value: '82'
+              newvalue: Decommissioned
+            -
+              value: '83'
+              newvalue: Recommissioning
+            -
+              value: '84'
+              newvalue: 'Replacing node'
+            -
+              value: '85'
+              newvalue: Scheduling
+            -
+              value: '86'
+              newvalue: Pausing
+            -
+              value: '87'
+              newvalue: Suspending
+            -
+              value: '88'
+              newvalue: Suspended
+            -
+              value: '89'
+              newvalue: Overload
+            -
+              value: '90'
+              newvalue: 'To be switch'
+            -
+              value: '91'
+              newvalue: Switching
+            -
+              value: '92'
+              newvalue: 'To be cleanup'
+            -
+              value: '93'
+              newvalue: 'Forced start'
+            -
+              value: '94'
+              newvalue: Error
+            -
+              value: '95'
+              newvalue: 'Job completed'
+            -
+              value: '96'
+              newvalue: 'Partition Migrating'
+            -
+              value: '97'
+              newvalue: Mount
+            -
+              value: '98'
+              newvalue: Umount
+            -
+              value: '99'
+              newvalue: INSTALLING
+            -
+              value: '100'
+              newvalue: 'To Be Synchronized'
+            -
+              value: '101'
+              newvalue: Connecting
+            -
+              value: '102'
+              newvalue: 'Service Switching'
+            -
+              value: '103'
+              newvalue: 'Power-on failed'
+            -
+              value: '104'
+              newvalue: Repairing
+            -
+              value: '105'
+              newvalue: Abnormal
+            -
+              value: '106'
+              newvalue: Deleting
+            -
+              value: '107'
+              newvalue: Modifying
+        -
+          uuid: 695a6e885f6f4b1e8e76e0e8a72da384
+          name: 'ICMP Ping Status'
+          mappings:
+            -
+              value: '0'
+              newvalue: Unavailable
+            -
+              value: '1'
+              newvalue: Available

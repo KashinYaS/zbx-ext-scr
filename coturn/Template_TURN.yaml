@@ -1,0 +1,80 @@
+zabbix_export:
+  version: '5.4'
+  date: '2022-06-21T06:00:10Z'
+  groups:
+    -
+      uuid: 39e25b9672344f8c82b8152d9f74d7c6
+      name: 'Отдел ОРТИ/Templates'
+  templates:
+    -
+      uuid: 69deab6cba4542afa98a863a860acd04
+      template: Template_ORTI_TURN
+      name: Template_ORTI_TURN
+      groups:
+        -
+          name: 'Отдел ОРТИ/Templates'
+      items:
+        -
+          uuid: 9aaf8d1178404e0d992e2703a76086ad
+          name: 'TURN DTLS sessions'
+          key: 'turn.sessions.total[{$PASSWORD},"dtls"]'
+          delay: 3m
+        -
+          uuid: 82851b869c90451a900cede003175930
+          name: 'TURN TCP sessions'
+          key: 'turn.sessions.total[{$PASSWORD},"tcp"]'
+          delay: 3m
+        -
+          uuid: 7d81f435d1f54dd38d6d88b2e6e4f15c
+          name: 'TURN TLS sessions'
+          key: 'turn.sessions.total[{$PASSWORD},"tls"]'
+          delay: 3m
+        -
+          uuid: 4e37bda405234c0b9f4c4b150a751cd9
+          name: 'TURN UDP sessions'
+          key: 'turn.sessions.total[{$PASSWORD},"udp"]'
+          delay: 3m
+        -
+          uuid: 3ff94c2b3f5942428200236eb2a4b37d
+          name: 'Total TURN sessions'
+          key: 'turn.sessions.total[{$PASSWORD}]'
+          delay: 3m
+      macros:
+        -
+          macro: '{$PASSWORD}'
+          value: password
+  graphs:
+    -
+      uuid: d8c3e11bbb984983b6c4584982379112
+      name: 'TURN sessions'
+      graph_items:
+        -
+          sortorder: '1'
+          color: 1A7C11
+          item:
+            host: Template_ORTI_TURN
+            key: 'turn.sessions.total[{$PASSWORD}]'
+        -
+          sortorder: '2'
+          color: F63100
+          item:
+            host: Template_ORTI_TURN
+            key: 'turn.sessions.total[{$PASSWORD},"tcp"]'
+        -
+          sortorder: '3'
+          color: 2774A4
+          item:
+            host: Template_ORTI_TURN
+            key: 'turn.sessions.total[{$PASSWORD},"udp"]'
+        -
+          sortorder: '4'
+          color: A54F10
+          item:
+            host: Template_ORTI_TURN
+            key: 'turn.sessions.total[{$PASSWORD},"dtls"]'
+        -
+          sortorder: '5'
+          color: FC6EA3
+          item:
+            host: Template_ORTI_TURN
+            key: 'turn.sessions.total[{$PASSWORD},"tls"]'

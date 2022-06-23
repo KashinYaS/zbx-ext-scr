@@ -1,0 +1,18 @@
+#!/usr/bin/expect
+
+set timeout 8
+
+set password [lindex $argv 0]
+set protocol [lindex $argv 1]
+spawn telnet 127.0.0.1 5766
+expect "Enter password: \r
+"
+send -- "$password\r"
+expect "\r
+> "
+send -- "pu $protocol\r"
+expect "\r
+> "
+send -- "exit\r"
+expect eof
+
