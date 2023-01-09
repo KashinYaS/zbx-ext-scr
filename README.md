@@ -8,3 +8,7 @@ Here are external scripts that are used as a supplement to Zabbix 4.4 and furthe
 - cisco_ucs: Cisco UCS helper script
 - UPS_MP_RT: helper scripts for some Russian (originally made in China) UPS network modules
 - brocade: helper script for Brocade LLD template
+
+To fix "wrong interpreter" if it happens, run:
+sed -i -e 's/\r$//' *
+in scripts folder
