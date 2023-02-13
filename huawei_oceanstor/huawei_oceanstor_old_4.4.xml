@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
-    <version>5.0</version>
-    <date>2023-02-13T06:03:14Z</date>
+    <version>4.4</version>
+    <date>2021-04-12T05:00:03Z</date>
     <groups>
         <group>
-            <name>Templates</name>
+            <name>Отдел ОРТИ/Templates</name>
         </group>
     </groups>
     <templates>
         <template>
-            <template>Template_2.2_Huawei_OceanStor</template>
-            <name>Template_2.2_Huawei_OceanStor</name>
+            <template>Template_ORTI_2.2_Huawei_OceanStor</template>
+            <name>Template_ORTI_2.2_Huawei_OceanStor</name>
             <groups>
                 <group>
-                    <name>Templates</name>
+                    <name>Отдел ОРТИ/Templates</name>
                 </group>
             </groups>
             <applications>
@@ -42,7 +42,8 @@
             <items>
                 <item>
                     <name>ESN</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>.1.3.6.1.4.1.34774.4.1.1.1.0</snmp_oid>
                     <key>deviceId.0</key>
                     <delay>2h</delay>
@@ -58,7 +59,7 @@
                 <item>
                     <name>Alarms Count</name>
                     <type>EXTERNAL</type>
-                    <key>hw_os_alarms[&quot;{HOST.CONN}&quot;,&quot;{HOST.CONN}&quot;,&quot;{$SNMP_COMMUNITY}&quot;]</key>
+                    <key>hw_os_alarms[&quot;{HOST.CONN}&quot;,&quot;{IPADDRESS}&quot;,&quot;{$SNMP_COMMUNITY}&quot;]</key>
                     <delay>5m</delay>
                     <applications>
                         <application>
@@ -79,7 +80,7 @@
                     <name>Ping</name>
                     <type>SIMPLE</type>
                     <key>icmpping</key>
-                    <delay>{$PING_PERIOD}</delay>
+                    <delay>60</delay>
                     <history>7d</history>
                     <trends>120d</trends>
                     <applications>
@@ -92,7 +93,7 @@
                     </valuemap>
                     <triggers>
                         <trigger>
-                            <expression>{max({$NO_PING_PERIOD})}&lt;1</expression>
+                            <expression>{max(150)}&lt;1</expression>
                             <name>unavailable</name>
                             <priority>HIGH</priority>
                         </trigger>
@@ -100,7 +101,8 @@
                 </item>
                 <item>
                     <name>System Status</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>.1.3.6.1.4.1.34774.4.1.1.3.0</snmp_oid>
                     <key>status.0</key>
                     <delay>10m</delay>
@@ -123,7 +125,8 @@
                 </item>
                 <item>
                     <name>System Name</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>.1.3.6.1.2.1.1.5.0</snmp_oid>
                     <key>sysName.0</key>
                     <delay>10m</delay>
@@ -135,17 +138,11 @@
                             <name>Inventory</name>
                         </application>
                     </applications>
-                    <triggers>
-                        <trigger>
-                            <expression>{nodata(600)}=1</expression>
-                            <name>SNMP unavailable</name>
-                            <priority>AVERAGE</priority>
-                        </trigger>
-                    </triggers>
                 </item>
                 <item>
                     <name>Firmware version</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>.1.3.6.1.4.1.34774.4.1.1.6.0</snmp_oid>
                     <key>version.0</key>
                     <delay>10m</delay>
@@ -162,14 +159,16 @@
             <discovery_rules>
                 <discovery_rule>
                     <name>Controller</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.2.1.1]</snmp_oid>
                     <key>discovery.hwInfoControllerID</key>
                     <delay>30m</delay>
                     <item_prototypes>
                         <item_prototype>
                             <name>Controller {#SNMPVALUE} CPU Usage</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.5.2.1.8.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoControllerCPUUsage.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -183,7 +182,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Controller {#SNMPVALUE} Health Status</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.5.2.1.2.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoControllerHealthStatus.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -199,7 +199,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Controller {#SNMPVALUE} Memory Usage</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.5.2.1.9.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoControllerMemoryUsage.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -220,7 +221,7 @@
                                 <graph_item>
                                     <color>1A7C11</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwInfoControllerCPUUsage.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -228,7 +229,7 @@
                                     <sortorder>1</sortorder>
                                     <color>4000FF</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwInfoControllerMemoryUsage.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -238,7 +239,8 @@
                 </discovery_rule>
                 <discovery_rule>
                     <name>Disk</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.1.1.4]</snmp_oid>
                     <key>discovery.hwInfoDiskLocation</key>
                     <delay>30m</delay>
@@ -265,7 +267,7 @@
                                     <dependencies>
                                         <dependency>
                                             <name>unavailable</name>
-                                            <expression>{Template_2.2_Huawei_OceanStor:icmpping.max({$NO_PING_PERIOD})}&lt;1</expression>
+                                            <expression>{Template_ORTI_2.2_Huawei_OceanStor:icmpping.max(150)}&lt;1</expression>
                                         </dependency>
                                     </dependencies>
                                 </trigger_prototype>
@@ -275,7 +277,8 @@
                 </discovery_rule>
                 <discovery_rule>
                     <name>Enclosure</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.6.1.2]</snmp_oid>
                     <key>discovery.hwInfoEnclosureName</key>
                     <delay>30m</delay>
@@ -292,7 +295,8 @@
                     <item_prototypes>
                         <item_prototype>
                             <name>Enclosure {#SNMPVALUE} Health Status</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>.1.3.6.1.4.1.34774.4.1.23.5.6.1.4.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoEnclosureHealthStatus.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -315,7 +319,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Enclosure {#SNMPVALUE} ESN</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>.1.3.6.1.4.1.34774.4.1.23.5.6.1.9.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoEnclosureSN.[{#SNMPINDEX}]</key>
                             <delay>8h</delay>
@@ -329,7 +334,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Enclosure {#SNMPVALUE} Temperature</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.5.6.1.8.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoEnclosureTemperature.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -347,7 +353,8 @@
                 </discovery_rule>
                 <discovery_rule>
                     <name>Controller Enclosure</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.5.6.1.2]</snmp_oid>
                     <key>discovery.hwInfoEnclosureName.CTE</key>
                     <delay>30m</delay>
@@ -363,7 +370,8 @@
                     <item_prototypes>
                         <item_prototype>
                             <name>Enclosure {#SNMPVALUE} Health Status</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>.1.3.6.1.4.1.34774.4.1.23.5.6.1.4.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoEnclosureHealthStatus.CTE.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -386,7 +394,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Enclosure {#SNMPVALUE} ESN</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>.1.3.6.1.4.1.34774.4.1.23.5.6.1.9.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoEnclosureSN.CTE.[{#SNMPINDEX}]</key>
                             <delay>8h</delay>
@@ -400,7 +409,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Enclosure {#SNMPVALUE} Temperature</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.5.6.1.8.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoEnclosureTemperature.CTE.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -422,66 +432,17 @@
                     </item_prototypes>
                 </discovery_rule>
                 <discovery_rule>
-                    <name>IP Ports</name>
-                    <type>SNMP_AGENT</type>
-                    <snmp_oid>discovery[{#PORT_LOCATION},.1.3.6.1.4.1.34774.4.1.23.5.8.1.2,{#PORT_ADDRESS},.1.3.6.1.4.1.34774.4.1.23.5.8.1.6]</snmp_oid>
-                    <key>discovery.hwInfoPortEthLocation</key>
-                    <delay>30m</delay>
-                    <filter>
-                        <conditions>
-                            <condition>
-                                <macro>{#PORT_LOCATION}</macro>
-                                <value>{$PING_IP_INTERFACE_NAMES}</value>
-                                <formulaid>B</formulaid>
-                            </condition>
-                            <condition>
-                                <macro>{#PORT_ADDRESS}</macro>
-                                <value>^$</value>
-                                <operator>NOT_MATCHES_REGEX</operator>
-                                <formulaid>A</formulaid>
-                            </condition>
-                            <condition>
-                                <macro>{#PORT_LOCATION}</macro>
-                                <value>{$PING_IP_INTERFACE_NAMES_EXCL}</value>
-                                <operator>NOT_MATCHES_REGEX</operator>
-                                <formulaid>C</formulaid>
-                            </condition>
-                        </conditions>
-                    </filter>
-                    <item_prototypes>
-                        <item_prototype>
-                            <name>Ping {#PORT_LOCATION} ({#PORT_ADDRESS})</name>
-                            <type>SIMPLE</type>
-                            <key>icmpping[{#PORT_ADDRESS}]</key>
-                            <delay>{$PING_PERIOD}</delay>
-                            <applications>
-                                <application>
-                                    <name>Availability</name>
-                                </application>
-                            </applications>
-                            <valuemap>
-                                <name>ICMP Ping Status</name>
-                            </valuemap>
-                            <trigger_prototypes>
-                                <trigger_prototype>
-                                    <expression>{max({$NO_PING_PERIOD})}&lt;1</expression>
-                                    <name>IP interface {#PORT_LOCATION} ({#PORT_ADDRESS}) unavailable</name>
-                                    <priority>HIGH</priority>
-                                </trigger_prototype>
-                            </trigger_prototypes>
-                        </item_prototype>
-                    </item_prototypes>
-                </discovery_rule>
-                <discovery_rule>
                     <name>Storage Pool</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.23.4.2.1.2]</snmp_oid>
                     <key>discovery.hwInfoStoragePoolName</key>
                     <delay>30m</delay>
                     <item_prototypes>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Compression Ratio</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.26.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolCompressionRatio.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -495,7 +456,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Data Reduction Ratio</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.24.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolDataReductionRatio.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -509,7 +471,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Deduplication Ratio</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.25.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolDeduplicationRatio.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -523,7 +486,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Free Capacity</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.9.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolFreeCapacity.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -542,7 +506,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Health Status</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.5.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolHealthStatus.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -557,7 +522,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} LUN Total Capacity</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.23.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolLunTotalCapacity.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -577,7 +543,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Subscribed Capacity</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.8.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolSubscribedCapacity.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -597,7 +564,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Pool {#SNMPVALUE} Total Capacity</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.23.4.2.1.7.{#SNMPINDEX}</snmp_oid>
                             <key>hwInfoStoragePoolTotalCapacity.[{#SNMPINDEX}]</key>
                             <delay>10m</delay>
@@ -622,7 +590,7 @@
                                 <graph_item>
                                     <color>1A7C11</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwInfoStoragePoolLunTotalCapacity.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -630,7 +598,7 @@
                                     <sortorder>1</sortorder>
                                     <color>F63100</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwInfoStoragePoolSubscribedCapacity.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -638,7 +606,7 @@
                                     <sortorder>2</sortorder>
                                     <color>2774A4</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwInfoStoragePoolTotalCapacity.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -648,14 +616,16 @@
                 </discovery_rule>
                 <discovery_rule>
                     <name>Performance Node</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.21.3.1.1]</snmp_oid>
                     <key>discovery.hwPerfNodeIfIndex</key>
                     <delay>30m</delay>
                     <item_prototypes>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} Average Cache Usage</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.3.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeAvgCacheUsage.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -668,7 +638,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} CPU Usage</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.2.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeCPUUsage.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -681,7 +652,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} IOPS Read</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.6.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeReadIOPS.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -693,7 +665,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} BPS Read</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.9.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeReadTraffic.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -712,7 +685,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} IOPS Total</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.5.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeTotalIOPS.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -724,7 +698,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} BPS Total</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.8.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeTotalTraffic.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -743,7 +718,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} IOPS Write</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.7.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeWriteIOPS.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -755,7 +731,8 @@
                         </item_prototype>
                         <item_prototype>
                             <name>Node {#SNMPVALUE} BPS Write</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>1.3.6.1.4.1.34774.4.1.21.3.1.10.{#SNMPINDEX}</snmp_oid>
                             <key>hwPerfNodeWriteTraffic.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -781,7 +758,7 @@
                                 <graph_item>
                                     <color>4000FF</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeReadTraffic.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -789,7 +766,7 @@
                                     <sortorder>1</sortorder>
                                     <color>F63100</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeTotalTraffic.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -797,7 +774,7 @@
                                     <sortorder>2</sortorder>
                                     <color>BF00FF</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeWriteTraffic.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -806,7 +783,7 @@
                                     <color>1A7C11</color>
                                     <yaxisside>RIGHT</yaxisside>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeCPUUsage.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -819,7 +796,7 @@
                                 <graph_item>
                                     <color>4000FF</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeReadIOPS.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -827,7 +804,7 @@
                                     <sortorder>1</sortorder>
                                     <color>AC8C14</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeTotalIOPS.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -835,7 +812,7 @@
                                     <sortorder>2</sortorder>
                                     <color>BF00FF</color>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeWriteIOPS.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -844,7 +821,7 @@
                                     <color>1A7C11</color>
                                     <yaxisside>RIGHT</yaxisside>
                                     <item>
-                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                                         <key>hwPerfNodeCPUUsage.[{#SNMPINDEX}]</key>
                                     </item>
                                 </graph_item>
@@ -854,14 +831,16 @@
                 </discovery_rule>
                 <discovery_rule>
                     <name>Storage Controller</name>
-                    <type>SNMP_AGENT</type>
+                    <type>SNMPV2</type>
+                    <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                     <snmp_oid>discovery[{#SNMPVALUE},.1.3.6.1.4.1.34774.4.1.19.8.12.1.3]</snmp_oid>
                     <key>discovery.hwStorageControllerLocation</key>
                     <delay>30m</delay>
                     <item_prototypes>
                         <item_prototype>
                             <name>Controller  {#SNMPVALUE} Health Status</name>
-                            <type>SNMP_AGENT</type>
+                            <type>SNMPV2</type>
+                            <snmp_community>{$SNMP_COMMUNITY}</snmp_community>
                             <snmp_oid>.1.3.6.1.4.1.34774.4.1.19.8.12.1.4.{#SNMPINDEX}</snmp_oid>
                             <key>hwStorageControllerHealthStatus.[{#SNMPINDEX}]</key>
                             <delay>2m</delay>
@@ -887,25 +866,6 @@
             </discovery_rules>
             <macros>
                 <macro>
-                    <macro>{$NO_PING_PERIOD}</macro>
-                    <value>150</value>
-                    <description>Ping trigger fires when no ping for {$NO_PING_PERIOD}</description>
-                </macro>
-                <macro>
-                    <macro>{$PING_IP_INTERFACE_NAMES_EXCL}</macro>
-                    <value>^.+\.MAINTENANCE$</value>
-                    <description>Regex for IP interfaces to not monitor with Ping</description>
-                </macro>
-                <macro>
-                    <macro>{$PING_IP_INTERFACE_NAMES_INC}</macro>
-                    <value>^.+\.MGMT?$</value>
-                    <description>Regex for IP interfaces to monitor with Ping</description>
-                </macro>
-                <macro>
-                    <macro>{$PING_PERIOD}</macro>
-                    <value>1m</value>
-                </macro>
-                <macro>
                     <macro>{$SNMP_COMMUNITY}</macro>
                     <value>OceanStor</value>
                 </macro>
@@ -921,7 +881,7 @@
                             <style>0</style>
                             <resource>
                                 <name>Controller {#SNMPVALUE} CPU and Memory Usage</name>
-                                <host>Template_2.2_Huawei_OceanStor</host>
+                                <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                             </resource>
                             <width>700</width>
                             <height>100</height>
@@ -943,7 +903,7 @@
                             <style>0</style>
                             <resource>
                                 <name>Performance Node {#SNMPVALUE} BPS</name>
-                                <host>Template_2.2_Huawei_OceanStor</host>
+                                <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                             </resource>
                             <width>700</width>
                             <height>100</height>
@@ -965,7 +925,7 @@
                             <style>0</style>
                             <resource>
                                 <name>Performance Node {#SNMPVALUE} IOPS</name>
-                                <host>Template_2.2_Huawei_OceanStor</host>
+                                <host>Template_ORTI_2.2_Huawei_OceanStor</host>
                             </resource>
                             <width>700</width>
                             <height>100</height>
