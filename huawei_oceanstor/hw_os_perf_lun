@@ -1,0 +1,22 @@
+#!/bin/bash
+TIMEOUTLONG=2
+
+PERFLUNIDS=`snmpbulkwalk -r 0 -t $TIMEOUTLONG -v2c -c $2 -Oqn $1 ".1.3.6.1.4.1.34774.4.1.21.4.1.1" 2>/dev/null | cut -d '.' -f15-`
+
+if [ $? -eq 0 ]
+then
+  LUNNAMES=`snmpbulkwalk -r 0 -t $TIMEOUTLONG -v2c -c $2 -Oqn $1 ".1.3.6.1.4.1.34774.4.1.19.9.4.1.2" 2>/dev/null | cut -d '.' -f16- | tr -d '\"'`
+  IFS=$'
+'
+  for PERFLUNID in $PERFLUNIDS; do
+    SNMPINDEX=`echo "$PERFLUNID" | cut -d' ' -f1`
+    LUNID=`echo "$PERFLUNID" | cut -d' ' -f2`
+    LUNNAME=`echo -e "$LUNNAMES" | grep "^$LUNID .*" | cut -d' ' -f2`
+    jq -n --arg SNMPINDEX "$SNMPINDEX" --arg LUNNAME "$LUNNAME" --arg LUNID "$LUNID" '{"{#SNMPINDEX}": $SNMPINDEX, "{#LUNID}": $LUNID, "{#LUNNAME}": $LUNNAME}'
+  done # | jq -n '.data |= [inputs]'
+else
+  # Wrong community specified or smth. Cannot retrive OID value. Quitting with error.
+  echo "-100500"
+  exit 0
+fi
+

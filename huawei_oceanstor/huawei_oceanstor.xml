@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2023-02-13T06:03:14Z</date>
+    <date>2023-02-16T10:13:42Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -36,6 +36,12 @@
                     <name>Load</name>
                 </application>
                 <application>
+                    <name>Performance - LUN</name>
+                </application>
+                <application>
+                    <name>Performance - Node</name>
+                </application>
+                <application>
                     <name>Storage</name>
                 </application>
             </applications>
@@ -52,6 +58,21 @@
                     <applications>
                         <application>
                             <name>Inventory</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Performance data collection enabled</name>
+                    <type>SNMP_AGENT</type>
+                    <snmp_oid>.1.3.6.1.4.1.34774.4.1.21.1.0</snmp_oid>
+                    <key>hwPerformanceSwitch</key>
+                    <delay>2h</delay>
+                    <applications>
+                        <application>
+                            <name>Performance - LUN</name>
+                        </application>
+                        <application>
+                            <name>Performance - Node</name>
                         </application>
                     </applications>
                 </item>
@@ -664,6 +685,9 @@
                                 <application>
                                     <name>Load</name>
                                 </application>
+                                <application>
+                                    <name>Performance - Node</name>
+                                </application>
                             </applications>
                         </item_prototype>
                         <item_prototype>
@@ -677,6 +701,9 @@
                                 <application>
                                     <name>Load</name>
                                 </application>
+                                <application>
+                                    <name>Performance - Node</name>
+                                </application>
                             </applications>
                         </item_prototype>
                         <item_prototype>
@@ -688,6 +715,9 @@
                             <applications>
                                 <application>
                                     <name>Load</name>
+                                </application>
+                                <application>
+                                    <name>Performance - Node</name>
                                 </application>
                             </applications>
                         </item_prototype>
@@ -701,6 +731,9 @@
                             <applications>
                                 <application>
                                     <name>Load</name>
+                                </application>
+                                <application>
+                                    <name>Performance - Node</name>
                                 </application>
                             </applications>
                             <preprocessing>
@@ -720,6 +753,9 @@
                                 <application>
                                     <name>Load</name>
                                 </application>
+                                <application>
+                                    <name>Performance - Node</name>
+                                </application>
                             </applications>
                         </item_prototype>
                         <item_prototype>
@@ -732,6 +768,9 @@
                             <applications>
                                 <application>
                                     <name>Load</name>
+                                </application>
+                                <application>
+                                    <name>Performance - Node</name>
                                 </application>
                             </applications>
                             <preprocessing>
@@ -751,6 +790,9 @@
                                 <application>
                                     <name>Load</name>
                                 </application>
+                                <application>
+                                    <name>Performance - Node</name>
+                                </application>
                             </applications>
                         </item_prototype>
                         <item_prototype>
@@ -763,6 +805,9 @@
                             <applications>
                                 <application>
                                     <name>Load</name>
+                                </application>
+                                <application>
+                                    <name>Performance - Node</name>
                                 </application>
                             </applications>
                             <preprocessing>
@@ -884,12 +929,158 @@
                         </item_prototype>
                     </item_prototypes>
                 </discovery_rule>
+                <discovery_rule>
+                    <name>LUN</name>
+                    <type>EXTERNAL</type>
+                    <key>hw_os_perf_lun[&quot;{HOST.CONN}&quot;,&quot;{$SNMP_COMMUNITY}&quot;]</key>
+                    <delay>30m</delay>
+                    <filter>
+                        <evaltype>AND</evaltype>
+                        <conditions>
+                            <condition>
+                                <macro>{#LUNNAME}</macro>
+                                <value>{$PERF_INCLUDE_VOLUME_NAME}</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#LUNNAME}</macro>
+                                <value>{$PERF_EXCLUDE_VOLUME_NAME}</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>B</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <description>Was discovery[{#LUNID},.1.3.6.1.4.1.34774.4.1.19.9.4.1.1,{#LUNNAME},.1.3.6.1.4.1.34774.4.1.19.9.4.1.2]&#13;
+&#13;
+Usually {#LUNID} is equal to {#SNMPINDEX} but this behaviour is not guaranteed by manufacturer. Performance OIDs have REFERENCE to ID of monitored LUN, not {#SNMPINDEX} equal to monitored LUN ID.</description>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>LUN {#LUNNAME} IOPS Read</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.34774.4.1.21.4.1.4.{#SNMPINDEX}</snmp_oid>
+                            <key>hwPerfLunReadIOPS.[{#SNMPINDEX}]</key>
+                            <delay>{$HIGH_RES_PERF_PERIOD}</delay>
+                            <units>ops</units>
+                            <applications>
+                                <application>
+                                    <name>Performance - LUN</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>LUN {#LUNNAME} BPS Read</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.34774.4.1.21.4.1.7.{#SNMPINDEX}</snmp_oid>
+                            <key>hwPerfLunReadTraffic.[{#SNMPINDEX}]</key>
+                            <delay>{$HIGH_RES_PERF_PERIOD}</delay>
+                            <units>Bps</units>
+                            <applications>
+                                <application>
+                                    <name>Performance - LUN</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1048576</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>LUN {#LUNNAME} IOPS Write</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.34774.4.1.21.4.1.5.{#SNMPINDEX}</snmp_oid>
+                            <key>hwPerfLunWriteIOPS.[{#SNMPINDEX}]</key>
+                            <delay>{$HIGH_RES_PERF_PERIOD}</delay>
+                            <units>ops</units>
+                            <applications>
+                                <application>
+                                    <name>Performance - LUN</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>LUN {#LUNNAME} BPS Write</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>.1.3.6.1.4.1.34774.4.1.21.4.1.8.{#SNMPINDEX}</snmp_oid>
+                            <key>hwPerfLunWriteTraffic.[{#SNMPINDEX}]</key>
+                            <delay>{$HIGH_RES_PERF_PERIOD}</delay>
+                            <units>Bps</units>
+                            <applications>
+                                <application>
+                                    <name>Performance - LUN</name>
+                                </application>
+                            </applications>
+                            <preprocessing>
+                                <step>
+                                    <type>MULTIPLIER</type>
+                                    <params>1048576</params>
+                                </step>
+                            </preprocessing>
+                        </item_prototype>
+                    </item_prototypes>
+                    <graph_prototypes>
+                        <graph_prototype>
+                            <name>LUN {#LUNNAME} BPS</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <key>hwPerfLunReadTraffic.[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <key>hwPerfLunWriteTraffic.[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                        <graph_prototype>
+                            <name>LUN {#LUNNAME} IOPS</name>
+                            <graph_items>
+                                <graph_item>
+                                    <sortorder>1</sortorder>
+                                    <color>1A7C11</color>
+                                    <item>
+                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <key>hwPerfLunReadIOPS.[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                                <graph_item>
+                                    <sortorder>2</sortorder>
+                                    <color>F63100</color>
+                                    <item>
+                                        <host>Template_2.2_Huawei_OceanStor</host>
+                                        <key>hwPerfLunWriteIOPS.[{#SNMPINDEX}]</key>
+                                    </item>
+                                </graph_item>
+                            </graph_items>
+                        </graph_prototype>
+                    </graph_prototypes>
+                </discovery_rule>
             </discovery_rules>
             <macros>
+                <macro>
+                    <macro>{$HIGH_RES_PERF_PERIOD}</macro>
+                    <value>3m</value>
+                </macro>
                 <macro>
                     <macro>{$NO_PING_PERIOD}</macro>
                     <value>150</value>
                     <description>Ping trigger fires when no ping for {$NO_PING_PERIOD}</description>
+                </macro>
+                <macro>
+                    <macro>{$PERF_EXCLUDE_VOLUME_NAME}</macro>
+                    <value>^MODIFY_TO_EXCLUDE_VOLUME_NAME$</value>
+                </macro>
+                <macro>
+                    <macro>{$PERF_INCLUDE_VOLUME_NAME}</macro>
                 </macro>
                 <macro>
                     <macro>{$PING_IP_INTERFACE_NAMES_EXCL}</macro>
