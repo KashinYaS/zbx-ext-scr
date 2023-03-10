@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>5.0</version>
-    <date>2023-02-16T10:13:42Z</date>
+    <date>2023-03-10T03:36:16Z</date>
     <groups>
         <group>
             <name>Templates</name>
@@ -232,7 +232,38 @@
                                 </application>
                             </applications>
                         </item_prototype>
+                        <item_prototype>
+                            <name>Controller {#SNMPVALUE} Running Status</name>
+                            <type>SNMP_AGENT</type>
+                            <snmp_oid>1.3.6.1.4.1.34774.4.1.23.5.2.1.3.{#SNMPINDEX}</snmp_oid>
+                            <key>hwInfoControllerRunningStatus.[{#SNMPINDEX}]</key>
+                            <delay>2m</delay>
+                            <history>30d</history>
+                            <applications>
+                                <application>
+                                    <name>Health</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>Huawei Storage: Running status</name>
+                            </valuemap>
+                        </item_prototype>
                     </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{Template_2.2_Huawei_OceanStor:hwInfoControllerRunningStatus.[{#SNMPINDEX}].last()}&lt;&gt;27 or {Template_2.2_Huawei_OceanStor:hwInfoControllerHealthStatus.[{#SNMPINDEX}].last()}&lt;&gt;1</expression>
+                            <name>Controller {#SNMPVALUE} Running Status</name>
+                            <opdata>{ITEM.LASTVALUE}</opdata>
+                            <priority>WARNING</priority>
+                        </trigger_prototype>
+                        <trigger_prototype>
+                            <expression>{Template_2.2_Huawei_OceanStor:hwInfoControllerHealthStatus.[{#SNMPINDEX}].nodata({$CTRL_NODATA_PERIOD})}=1 and {Template_2.2_Huawei_OceanStor:hwInfoControllerRunningStatus.[{#SNMPINDEX}].nodata({$CTRL_NODATA_PERIOD})}=1</expression>
+                            <name>Controller {#SNMPVALUE} Unavailable (shut down or dead)</name>
+                            <opdata>{ITEM.LASTVALUE}</opdata>
+                            <priority>AVERAGE</priority>
+                            <description>Health Status and Running status OIDs become unavailable when controller is shut down.</description>
+                        </trigger_prototype>
+                    </trigger_prototypes>
                     <graph_prototypes>
                         <graph_prototype>
                             <name>Controller {#SNMPVALUE} CPU and Memory Usage</name>
@@ -1067,6 +1098,10 @@ Usually {#LUNID} is equal to {#SNMPINDEX} but this behaviour is not guaranteed b
             </discovery_rules>
             <macros>
                 <macro>
+                    <macro>{$CTRL_NODATA_PERIOD}</macro>
+                    <value>150</value>
+                </macro>
+                <macro>
                     <macro>{$HIGH_RES_PERF_PERIOD}</macro>
                     <value>3m</value>
                 </macro>
@@ -1233,6 +1268,163 @@ Usually {#LUNID} is equal to {#SNMPINDEX} but this behaviour is not guaranteed b
                 <mapping>
                     <value>13</value>
                     <newvalue>singleLinkFault</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>Huawei Storage: Running status</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Undefined</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Normal</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>Running</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>Not running</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>Not existed</newvalue>
+                </mapping>
+                <mapping>
+                    <value>5</value>
+                    <newvalue>Sleep in high temperature</newvalue>
+                </mapping>
+                <mapping>
+                    <value>6</value>
+                    <newvalue>Starting</newvalue>
+                </mapping>
+                <mapping>
+                    <value>7</value>
+                    <newvalue>Power failure protection</newvalue>
+                </mapping>
+                <mapping>
+                    <value>8</value>
+                    <newvalue>Spin down</newvalue>
+                </mapping>
+                <mapping>
+                    <value>9</value>
+                    <newvalue>Started</newvalue>
+                </mapping>
+                <mapping>
+                    <value>10</value>
+                    <newvalue>Link Up</newvalue>
+                </mapping>
+                <mapping>
+                    <value>11</value>
+                    <newvalue>Link Down</newvalue>
+                </mapping>
+                <mapping>
+                    <value>12</value>
+                    <newvalue>Powering on</newvalue>
+                </mapping>
+                <mapping>
+                    <value>13</value>
+                    <newvalue>Powered off</newvalue>
+                </mapping>
+                <mapping>
+                    <value>14</value>
+                    <newvalue>Pre-copy</newvalue>
+                </mapping>
+                <mapping>
+                    <value>15</value>
+                    <newvalue>Copyback</newvalue>
+                </mapping>
+                <mapping>
+                    <value>16</value>
+                    <newvalue>Reconstruction</newvalue>
+                </mapping>
+                <mapping>
+                    <value>17</value>
+                    <newvalue>Expansion</newvalue>
+                </mapping>
+                <mapping>
+                    <value>18</value>
+                    <newvalue>Unformatted</newvalue>
+                </mapping>
+                <mapping>
+                    <value>19</value>
+                    <newvalue>Formatting</newvalue>
+                </mapping>
+                <mapping>
+                    <value>20</value>
+                    <newvalue>Unmapped</newvalue>
+                </mapping>
+                <mapping>
+                    <value>21</value>
+                    <newvalue>Initial synchronizing</newvalue>
+                </mapping>
+                <mapping>
+                    <value>22</value>
+                    <newvalue>Consistent</newvalue>
+                </mapping>
+                <mapping>
+                    <value>23</value>
+                    <newvalue>Synchronizing</newvalue>
+                </mapping>
+                <mapping>
+                    <value>24</value>
+                    <newvalue>Synchronized</newvalue>
+                </mapping>
+                <mapping>
+                    <value>25</value>
+                    <newvalue>Unsynchronized</newvalue>
+                </mapping>
+                <mapping>
+                    <value>26</value>
+                    <newvalue>Split</newvalue>
+                </mapping>
+                <mapping>
+                    <value>27</value>
+                    <newvalue>Online</newvalue>
+                </mapping>
+                <mapping>
+                    <value>28</value>
+                    <newvalue>Offline</newvalue>
+                </mapping>
+                <mapping>
+                    <value>29</value>
+                    <newvalue>Locked</newvalue>
+                </mapping>
+                <mapping>
+                    <value>30</value>
+                    <newvalue>Enabled</newvalue>
+                </mapping>
+                <mapping>
+                    <value>31</value>
+                    <newvalue>Disabled</newvalue>
+                </mapping>
+                <mapping>
+                    <value>32</value>
+                    <newvalue>Balancing</newvalue>
+                </mapping>
+                <mapping>
+                    <value>33</value>
+                    <newvalue>To be recovered</newvalue>
+                </mapping>
+                <mapping>
+                    <value>34</value>
+                    <newvalue>Interrupted</newvalue>
+                </mapping>
+                <mapping>
+                    <value>35</value>
+                    <newvalue>Invalid</newvalue>
+                </mapping>
+                <mapping>
+                    <value>36</value>
+                    <newvalue>Not start</newvalue>
+                </mapping>
+                <mapping>
+                    <value>37</value>
+                    <newvalue>Queuing</newvalue>
                 </mapping>
             </mappings>
         </value_map>
