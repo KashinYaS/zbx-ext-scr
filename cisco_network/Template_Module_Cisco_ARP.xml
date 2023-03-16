@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2023-03-16T11:40:01Z</date>
+    <groups>
+        <group>
+            <name>Templates</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>Template_Module_Cisco_ARP</template>
+            <name>Template_Module_Cisco_ARP</name>
+            <groups>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>ARP Enabled interfaces</name>
+                    <type>EXTERNAL</type>
+                    <key>cisco_arp[&quot;{HOST.CONN}&quot;,&quot;{$SNMP_COMMUNITY}&quot;,&quot;discovery&quot;]</key>
+                    <delay>10m</delay>
+                    <filter>
+                        <evaltype>AND</evaltype>
+                        <conditions>
+                            <condition>
+                                <macro>{#IFNAME}</macro>
+                                <value>{$ARP_INT_NAME_MATCH}</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                            <condition>
+                                <macro>{#IFNAME}</macro>
+                                <value>{$ARP_INT_NAME_NOTMATCH}</value>
+                                <operator>NOT_MATCHES_REGEX</operator>
+                                <formulaid>B</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>Interface {#IFNAME}({#IFADDR}): resolved ARP count</name>
+                            <type>EXTERNAL</type>
+                            <key>cisco_arp[&quot;{HOST.CONN}&quot;,&quot;{$SNMP_COMMUNITY}&quot;,&quot;get&quot;,&quot;{#IFINDEX}&quot;]</key>
+                            <delay>3m</delay>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last()}&lt;{$LOWER_ARP_BOUNDARY:&quot;{#IFNAME}&quot;}</expression>
+                                    <name>Interface {#IFNAME}({#IFADDR}) resolved ARP count less than {$LOWER_ARP_BOUNDARY:&quot;{#IFNAME}&quot;}</name>
+                                    <priority>INFO</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$ARP_INT_NAME_MATCH}</macro>
+                    <value>^$</value>
+                    <description>Set to .* to add all interfaces</description>
+                </macro>
+                <macro>
+                    <macro>{$ARP_INT_NAME_NOTMATCH}</macro>
+                    <value>SET_TO_SKIP_INTERFACE_DISCOVERY</value>
+                </macro>
+                <macro>
+                    <macro>{$LOWER_ARP_BOUNDARY}</macro>
+                    <value>1</value>
+                    <description>ARP count to fire trigger. Set {$LOWER_ARP_BOUNDARY:&quot;{#IFNAME}&quot;} for specific interface. Set to 0 to prevent trigger.</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>

@@ -4,7 +4,7 @@
     <date>2022-12-29T04:51:46Z</date>
     <groups>
         <group>
-            <name>Network</name>
+            <name>Templates</name>
         </group>
     </groups>
     <templates>
@@ -13,7 +13,7 @@
             <name>Template_Module_Cisco_FC_Interfaces</name>
             <groups>
                 <group>
-                    <name>Network</name>
+                    <name>Templates</name>
                 </group>
             </groups>
             <applications>

@@ -1,0 +1,44 @@
+#!/bin/bash
+
+TIMEOUTLONG=0.5
+
+#setting up case-insensitive match
+shopt -s nocasematch
+
+case "$3" in
+  "get" )
+    ARPCount=`snmpwalk -v2c -r 0 -t $TIMEOUTLONG -c $2 -Ov $1 .1.3.6.1.2.1.4.22.1.4.$4 2>/dev/null | grep -c "dynamic"`
+    if [ $? -le 1 ] && [ -n ARPCount ]; then
+      echo $ARPCount
+      exit 0
+    else
+      # Error or no ARP
+      echo "0"
+      exit 0
+    fi
+    ;;
+  "discovery" )
+    IPAddrInterfaces=`snmpbulkwalk -v2c -r 0 -t $TIMEOUTLONG -c $2 -Oqn $1 1.3.6.1.2.1.4.20.1.2 2>/dev/null | cut -d'.' -f12-`
+    IFDescrs=`snmpbulkwalk -v2c -r 0 -t $TIMEOUTLONG -c $2 -Oqn $1 .1.3.6.1.2.1.2.2.1.2 2>/dev/null | cut -d'.' -f12-`
+    IFNames=`snmpbulkwalk -v2c -r 0 -t $TIMEOUTLONG -c $2 -Oqn $1  .1.3.6.1.2.1.31.1.1.1.1 2>/dev/null | cut -d'.' -f13-`
+    if [ -z "$4" ]; then
+      IFIndexes=`echo -e "$IPAddrInterfaces" | cut -d' ' -f2 | sort -n | uniq`
+    else
+      IFIndexes=`echo -e "$4"`
+    fi
+    IFS='
+'
+    for IFIndex in $IFIndexes; do
+      CurrentIPs=`echo -e "$IPAddrInterfaces" | grep ".* $IFIndex$" | cut -d' ' -f1`
+      CurrentIP=$(IFS=, ; echo "${CurrentIPs[*]}")
+      CurrentDescr=`echo -e "$IFDescrs" | grep "^$IFIndex .*" | cut -d' ' -f2`
+      CurrentName=`echo -e "$IFNames" | grep "^$IFIndex .*" | cut -d' ' -f2`
+
+      # Skipping Tunnel interface cause they never have a resolved ARP record
+      if  ! [[ "$CurrentDescr" =~ ^[Tt]unnel[0-9]+$ ]];  then
+        jq -n --arg SNMPIndex "$IFIndex" --arg SNMPAddress "$CurrentIP" --arg SNMPDescr "$CurrentDescr" --arg SNMPName "$CurrentName" '{"{#IFINDEX}": $SNMPIndex, "{#IFADDR}": $SNMPAddress, "{#IFDESCR}": $SNMPDescr, "{#IFNAME}": $SNMPName}'
+      fi
+    done | jq -n '.data |= [inputs]'
+    ;;
+*) echo "Wrong option specified.";;
+esac
