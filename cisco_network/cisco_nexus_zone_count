@@ -1,24 +1,37 @@
 #!/bin/bash
 
+TIMEOUTLONG=1.5
+
 # Get number of zones from device with ip $2 community $3 and VSAN ID $4
+# four arguments version (which skips the first argument) left to save the compatibility with old templates
+if [[ $# -eq 4 ]]
+then
+  FCSWITCH="$2"
+  SNMPCOMMUNITY="$3"
+  VSANID="$4" 
+else
+  FCSWITCH="$1"
+  SNMPCOMMUNITY="$2"
+  VSANID="$3"
+fi
 
-ZoneCount=`snmpbulkwalk -v2c -c $3 -Oqv -r 0 -t 2 $2 "1.3.6.1.4.1.9.9.294.1.1.7.1.2.$4" | wc -l 2>/dev/null`
 
-if [ $? -eq 0 ]
+if ZONECOUNT=$(snmpbulkwalk -v2c -c "$SNMPCOMMUNITY" -Oqv -r 0 -t "$TIMEOUTLONG" "$FCSWITCH" "1.3.6.1.4.1.9.9.294.1.1.7.1.2.$VSANID" 2>/dev/null)
 then
   #Succefully received disk state or "No OID available" message
-  if [[ $ZoneCount == No* ]]
+  if [[ $ZONECOUNT == No* ]]
   then
-    # No such OID available - quitting with error code to mark item as unavailable
-    echo "0"
-    exit 1
+    # No such OID available
+    echo "-1"
+    exit 0
   else
-    echo "$ZoneCount"
+    echo -e "$ZONECOUNT" | wc -l
     exit 0
   fi
 else
   # Community is wrong, connection timeout or something else
-  echo "0"
-  exit 2
+  echo "-2"
+  exit 0
 fi
+
 
